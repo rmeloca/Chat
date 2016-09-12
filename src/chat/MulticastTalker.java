@@ -58,7 +58,7 @@ public class MulticastTalker implements Runnable {
         } catch (SocketException ex) {
             System.err.println("Erro na comunicacao");
         } catch (IOException ex) {
-            System.err.println("Erro ao enviar mensagem");
+            System.err.println("Erro ao enviar mensagem" + ex.getMessage());
         }
 
     }

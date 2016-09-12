@@ -10,6 +10,6 @@ package chat;
  * @author romulo
  */
 public enum TipoMensagem {
-    MSG, JOIN, LEAVE;
+    MSG, JOIN, LEAVE, JOINACK, MSGIDV, LISTFILES, FILES, DOWNFILE, DOWNINFO;
 
 }
