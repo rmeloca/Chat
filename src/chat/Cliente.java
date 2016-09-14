@@ -10,18 +10,39 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Scanner;
 
+//Implementar um serviço de chat que possibilite:
+//- envio de mensagens para um grupo de pessoas (MulticastSocket) - GRUPO 225.1.2.3
+//- envio de mensagens individuais para as pessoas ativas (DatagramSocket) - receber na porta 6799
+//- compartilhamento e download de arquivos (Socket -- TCP) 
+//- interface de interação (GUI ou CLI)
+//
+//- protocolo textual:
+//   -- JOIN [apelido] 
+//   * junta-se ao grupo de conversação 
+//   -- JOINACK [apelido] 
+//   * resposta ao JOIN para possibilitar a manutenção da lista de usuários ativos
+//   -- MSG [apelido] "texto"
+//   * mensagem enviada a todos os membros do grupo pelo IP 225.1.2.3 e porta 6789 
+//   -- MSGIDV FROM [apelido] TO [apelido] "texto" 
+//   * mensagem enviada a um membro do grupo para ser recebida na porta 6799
+//   -- LISTFILES [apelido] 
+//   * solicitação de listagem de arquivos para um usuário 
+//   -- FILES [arq1, arq2, arqN] 
+//   * resposta para o LISTFILES
+//   -- DOWNFILE [apelido] filename 
+//   * solicita arquivo do servidor. 
+//   -- DOWNINFO [filename, size, IP, PORTA] 
+//   * resposta com informações sobre o arquivo e conexão TCP. 
+//   -- LEAVE [apelido]
+//   * deixa o grupo de conversação
 /**
  *
  * @author romulo
  */
 public class Cliente {
 
-//    implementar um chat usandop comunicação em grupo
-//    -> JOIN   --> JOIN    [APELIDO]
-//    -> MSG    --> MSG     [APELIDO] "texto"
-//    -> LEAVE  --> LEAVE   [APELIDO]
-//    ID GRUPO 225.1.2.3 porta 6789
     private String apelido;
+    private InetAddress ip;
 
     public Cliente(String apelido) {
         this.apelido = apelido;
@@ -45,7 +66,7 @@ public class Cliente {
             MulticastListener multicastListener = new MulticastListener(multicastSocket, this);
             Thread listenerThread = new Thread(multicastListener);
 
-            MulticastTalker multicastTalker = new MulticastTalker(multicastSocket, this);
+            MulticastTalker multicastTalker = new MulticastTalker(multicastSocket, group, this);
             Thread talkerThread = new Thread(multicastTalker);
 
             listenerThread.start();
@@ -79,15 +100,15 @@ public class Cliente {
 
         Cliente cliente = new Cliente(apelido);
 
-        System.out.println("IP");
+//        System.out.println("IP");
         String ip;
-        ip = scanner.next();
-//        ip = "225.1.2.3";
+//        ip = scanner.next();
+        ip = "225.1.2.3";
 
-        System.out.println("Porta");
+//        System.out.println("Porta");
         int porta;
-        porta = scanner.nextInt();
-//        porta = 6789;
+//        porta = scanner.nextInt();
+        porta = 6789;
 
         cliente.joinGroup(ip, porta);
     }

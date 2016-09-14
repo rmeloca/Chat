@@ -34,6 +34,8 @@ public class MulticastListener implements Runnable {
                 multicastSocket.receive(messageIn);
                 mensagem = new String(messageIn.getData());
                 System.out.println("Recebido:" + mensagem);
+                //enviar joinack
+                //buffer compartilhado
             } catch (IOException ex) {
                 System.err.println("Erro ao receber mensagem");
             }

@@ -7,6 +7,7 @@ package chat;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.Scanner;
@@ -19,10 +20,12 @@ public class MulticastTalker implements Runnable {
 
     private final MulticastSocket multicastSocket;
     private final Cliente cliente;
+    private final InetAddress endereco;
 
-    MulticastTalker(MulticastSocket multicastSocket, Cliente cliente) {
+    MulticastTalker(MulticastSocket multicastSocket, InetAddress endereco, Cliente cliente) {
         this.multicastSocket = multicastSocket;
         this.cliente = cliente;
+        this.endereco = endereco;
     }
 
     @Override
@@ -53,7 +56,7 @@ public class MulticastTalker implements Runnable {
         byte[] bytesMessage = mensagem.getBytes();
         DatagramPacket messageOut;
         try {
-            messageOut = new DatagramPacket(bytesMessage, bytesMessage.length, multicastSocket.getInterface(), multicastSocket.getLocalPort());
+            messageOut = new DatagramPacket(bytesMessage, bytesMessage.length, this.endereco, multicastSocket.getLocalPort());
             multicastSocket.send(messageOut);
         } catch (SocketException ex) {
             System.err.println("Erro na comunicacao");
