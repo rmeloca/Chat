@@ -5,9 +5,17 @@
  */
 package chat;
 
+import chat.multicast.MulticastTalker;
+import chat.multicast.MulticastInternalTalker;
+import chat.multicast.MulticastListener;
+import chat.udp.UDPTalker;
+import chat.udp.UDPListener;
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 //Implementar um serviço de chat que possibilite:
@@ -56,6 +64,41 @@ public class Cliente {
         return apelido;
     }
 
+    public void connectToPeer(int listenToPort, String talkToHost, int talkToPort) {
+        DatagramSocket listenerDatagramSocket = null;
+        DatagramSocket talkerDatagramSocket = null;
+        try {
+            InetAddress inetAddres = InetAddress.getByName(talkToHost);
+
+            listenerDatagramSocket = new DatagramSocket(listenToPort);
+            talkerDatagramSocket = new DatagramSocket();
+
+            talkerDatagramSocket.connect(inetAddres, talkToPort);
+
+            UDPListener udpListener = new UDPListener(listenerDatagramSocket);
+            UDPTalker udpTalker = new UDPTalker(talkerDatagramSocket);
+
+            Thread listener = new Thread(udpListener);
+            Thread talker = new Thread(udpTalker);
+
+            talker.start();
+            listener.start();
+
+            talker.join();
+            listener.join();
+
+        } catch (SocketException | UnknownHostException | InterruptedException ex) {
+            throw new RuntimeException(ex.getMessage());
+        } finally {
+            if (listenerDatagramSocket != null) {
+                listenerDatagramSocket.close(); //fecha o socket
+            }
+            if (talkerDatagramSocket != null) {
+                talkerDatagramSocket.close(); //fecha o socket
+            }
+        }
+    }
+
     public void joinGroup(String ip, int porta) {
         MulticastSocket multicastSocket = null;
         try {
@@ -63,7 +106,7 @@ public class Cliente {
             multicastSocket = new MulticastSocket(porta);
             multicastSocket.joinGroup(group);
 
-            MulticastListener multicastListener = new MulticastListener(multicastSocket, this);
+            MulticastListener multicastListener = new MulticastListener(multicastSocket, group, this);
             Thread listenerThread = new Thread(multicastListener);
 
             MulticastTalker multicastTalker = new MulticastTalker(multicastSocket, group, this);

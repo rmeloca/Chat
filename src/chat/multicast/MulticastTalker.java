@@ -3,8 +3,10 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package chat;
+package chat.multicast;
 
+import chat.Cliente;
+import chat.TipoMensagem;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -22,7 +24,7 @@ public class MulticastTalker implements Runnable {
     private final Cliente cliente;
     private final InetAddress endereco;
 
-    MulticastTalker(MulticastSocket multicastSocket, InetAddress endereco, Cliente cliente) {
+    public MulticastTalker(MulticastSocket multicastSocket, InetAddress endereco, Cliente cliente) {
         this.multicastSocket = multicastSocket;
         this.cliente = cliente;
         this.endereco = endereco;
@@ -43,11 +45,11 @@ public class MulticastTalker implements Runnable {
         sendMessage(TipoMensagem.LEAVE);
     }
 
-    private void sendMessage(TipoMensagem tipo) {
+    protected void sendMessage(TipoMensagem tipo) {
         sendMessage(tipo, null);
     }
 
-    private void sendMessage(TipoMensagem tipo, String mensagem) {
+    protected void sendMessage(TipoMensagem tipo, String mensagem) {
         if (mensagem != null) {
             mensagem = tipo + " " + "[" + cliente.getApelido() + "]" + " " + mensagem;
         } else {

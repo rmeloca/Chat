@@ -1,4 +1,4 @@
-package chat;
+package chat.tcp;
 
 /**
  * * TCPClient: Cliente para conexao TCP Descricao: Envia uma informacao ao *

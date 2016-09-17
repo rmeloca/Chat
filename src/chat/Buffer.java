@@ -20,26 +20,13 @@ public class Buffer {
     }
 
     public synchronized void add(Mensagem mensagem) {
-        try {
-            wait();
-            queue.add(mensagem);
-        } catch (InterruptedException ex) {
-            System.err.println("Thread Interrompida");
-        } finally {
-            notifyAll();
-        }
+        queue.add(mensagem);
+        notifyAll();
     }
 
-    public synchronized Mensagem poll() {
-        try {
-            wait();
-            return queue.poll();
-        } catch (InterruptedException ex) {
-            System.err.println("Thread Interrompida");
-        } finally {
-            notifyAll();
-        }
-        return null;
+    public synchronized Mensagem poll() throws InterruptedException {
+        wait();
+        return queue.poll();
     }
 
 }

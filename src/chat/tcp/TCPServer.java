@@ -1,4 +1,4 @@
-package chat;
+package chat.tcp;
 
 /**
  * * TCPServer: Servidor para conexao TCP com Threads Descricao: Recebe uma *

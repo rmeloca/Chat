@@ -1,4 +1,4 @@
-package chat;
+package chat.udp;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -13,6 +13,7 @@ import java.net.DatagramSocket;
  *
  * @author romulo
  */
+
 public class UDPListener implements Runnable {
 
     private final DatagramSocket datagramSocket;
