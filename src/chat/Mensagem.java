@@ -64,6 +64,14 @@ public class Mensagem {
         this.conteudo = conteudo;
     }
 
+    public TipoMensagem getTipo() {
+        return tipo;
+    }
+
+    public Cliente getRemetente() {
+        return remetente;
+    }
+
     @Override
     public String toString() {
         switch (tipo) {

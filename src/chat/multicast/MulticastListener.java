@@ -6,6 +6,7 @@
 package chat.multicast;
 
 import chat.Cliente;
+import chat.Mensagem;
 import chat.TipoMensagem;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -32,33 +33,27 @@ public class MulticastListener implements Runnable {
 
     @Override
     public void run() {
-        String mensagem = "";
+        String mensagemStr = "";
+        Mensagem mensagem = null;
         do {
             try {
                 this.buffer = new byte[1000];
                 DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
                 multicastSocket.receive(messageIn);
-                mensagem = new String(messageIn.getData());
-                System.out.println("Recebido:" + mensagem);
-                //enviar joinack
-                sendMessage(TipoMensagem.JOINACK);
+                mensagemStr = new String(messageIn.getData());
+                System.out.println("Recebido:" + mensagemStr);
+                mensagem = new Mensagem(mensagemStr);
+                if (mensagem.getTipo().equals(TipoMensagem.JOIN)) {
+                    sendMessage(new Mensagem(TipoMensagem.JOINACK, cliente));
+                }
             } catch (IOException ex) {
                 System.err.println("Erro ao receber mensagem");
             }
-        } while (!(mensagem.contains(TipoMensagem.LEAVE.name()) && mensagem.contains(cliente.getApelido())));
+        } while (!(mensagem.getTipo().equals(TipoMensagem.LEAVE) && mensagem.getRemetente().equals(this.cliente)));
     }
 
-    protected void sendMessage(TipoMensagem tipo) {
-        sendMessage(tipo, null);
-    }
-
-    protected void sendMessage(TipoMensagem tipo, String mensagem) {
-        if (mensagem != null) {
-            mensagem = tipo + " " + "[" + cliente.getApelido() + "]" + " " + mensagem;
-        } else {
-            mensagem = tipo + " " + "[" + cliente.getApelido() + "]";
-        }
-        byte[] bytesMessage = mensagem.getBytes();
+    private void sendMessage(Mensagem mensagem) {
+        byte[] bytesMessage = mensagem.toString().getBytes();
         DatagramPacket messageOut;
         try {
             messageOut = new DatagramPacket(bytesMessage, bytesMessage.length, this.endereco, multicastSocket.getLocalPort());

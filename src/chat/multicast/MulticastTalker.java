@@ -6,6 +6,7 @@
 package chat.multicast;
 
 import chat.Cliente;
+import chat.Mensagem;
 import chat.TipoMensagem;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -33,29 +34,20 @@ public class MulticastTalker implements Runnable {
     @Override
     public void run() {
         Scanner scanner = new Scanner(System.in);
-        sendMessage(TipoMensagem.JOIN);
+        sendMessage(new Mensagem(TipoMensagem.JOIN, cliente));
         do {
             System.out.println("Mensagem");
             String mensagem = scanner.nextLine();
             if (mensagem.contains("EXIT")) {
                 break;
             }
-            sendMessage(TipoMensagem.MSG, mensagem);
+            sendMessage(new Mensagem(TipoMensagem.MSG, cliente, mensagem));
         } while (true);
-        sendMessage(TipoMensagem.LEAVE);
+        sendMessage(new Mensagem(TipoMensagem.LEAVE, cliente));
     }
 
-    protected void sendMessage(TipoMensagem tipo) {
-        sendMessage(tipo, null);
-    }
-
-    protected void sendMessage(TipoMensagem tipo, String mensagem) {
-        if (mensagem != null) {
-            mensagem = tipo + " " + "[" + cliente.getApelido() + "]" + " " + mensagem;
-        } else {
-            mensagem = tipo + " " + "[" + cliente.getApelido() + "]";
-        }
-        byte[] bytesMessage = mensagem.getBytes();
+    protected void sendMessage(Mensagem mensagem) {
+        byte[] bytesMessage = mensagem.toString().getBytes();
         DatagramPacket messageOut;
         try {
             messageOut = new DatagramPacket(bytesMessage, bytesMessage.length, this.endereco, multicastSocket.getLocalPort());

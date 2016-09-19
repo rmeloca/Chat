@@ -7,7 +7,6 @@ package chat.multicast;
 
 import chat.Buffer;
 import chat.Cliente;
-import chat.TipoMensagem;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
@@ -28,7 +27,7 @@ public class MulticastInternalTalker extends MulticastTalker {
     public void run() {
         try {
             while (true) {
-                sendMessage(TipoMensagem.MSG, sharedBuffer.poll().toString());
+                sendMessage(sharedBuffer.poll());
             }
         } catch (InterruptedException ex) {
         }

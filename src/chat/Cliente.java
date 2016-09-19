@@ -25,11 +25,11 @@ import java.util.Scanner;
 //- interface de interação (GUI ou CLI)
 //
 //- protocolo textual:
-//   -- JOIN [apelido] 
+// +  -- JOIN [apelido] 
 //   * junta-se ao grupo de conversação 
-//   -- JOINACK [apelido] 
+// +  -- JOINACK [apelido] 
 //   * resposta ao JOIN para possibilitar a manutenção da lista de usuários ativos
-//   -- MSG [apelido] "texto"
+// +  -- MSG [apelido] "texto"
 //   * mensagem enviada a todos os membros do grupo pelo IP 225.1.2.3 e porta 6789 
 //   -- MSGIDV FROM [apelido] TO [apelido] "texto" 
 //   * mensagem enviada a um membro do grupo para ser recebida na porta 6799
@@ -41,7 +41,7 @@ import java.util.Scanner;
 //   * solicita arquivo do servidor. 
 //   -- DOWNINFO [filename, size, IP, PORTA] 
 //   * resposta com informações sobre o arquivo e conexão TCP. 
-//   -- LEAVE [apelido]
+// +  -- LEAVE [apelido]
 //   * deixa o grupo de conversação
 /**
  *
@@ -76,7 +76,7 @@ public class Cliente {
             talkerDatagramSocket.connect(inetAddres, talkToPort);
 
             UDPListener udpListener = new UDPListener(listenerDatagramSocket);
-            UDPTalker udpTalker = new UDPTalker(talkerDatagramSocket);
+            UDPTalker udpTalker = new UDPTalker(talkerDatagramSocket, this);
 
             Thread listener = new Thread(udpListener);
             Thread talker = new Thread(udpTalker);
@@ -133,6 +133,11 @@ public class Cliente {
                 multicastSocket.close(); //fecha o socket
             }
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return this.apelido.equals(((Cliente) obj).apelido);
     }
 
     public static void main(String[] args) {
