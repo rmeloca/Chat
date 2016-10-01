@@ -6,7 +6,6 @@
 package chat;
 
 import chat.multicast.MulticastTalker;
-import chat.multicast.MulticastInternalTalker;
 import chat.multicast.MulticastListener;
 import chat.udp.UDPTalker;
 import chat.udp.UDPListener;
@@ -99,6 +98,21 @@ public class Cliente {
         }
     }
 
+    public void leaveGroup(String ip, int porta) {
+        MulticastSocket multicastSocket = null;
+        try {
+            InetAddress group = InetAddress.getByName(ip);
+            multicastSocket = new MulticastSocket(porta);
+            multicastSocket.leaveGroup(group);
+        } catch (IOException ex) {
+            System.err.println("Erro ao sair do chat");
+        } finally {
+            if (multicastSocket != null) {
+                multicastSocket.close(); //fecha o socket
+            }
+        }
+    }
+
     public void joinGroup(String ip, int porta) {
         MulticastSocket multicastSocket = null;
         try {
@@ -115,19 +129,8 @@ public class Cliente {
             listenerThread.start();
             talkerThread.start();
 
-            listenerThread.join();
-            talkerThread.join();
-
-            try {
-                multicastSocket.leaveGroup(group);
-            } catch (IOException ex) {
-                System.err.println("Erro ao sair do chat");
-            }
-
         } catch (IOException ex) {
             System.err.println("Erro ao iniciar chat");
-        } catch (InterruptedException ex) {
-            System.err.println("Erro fluxo");
         } finally {
             if (multicastSocket != null) {
                 multicastSocket.close(); //fecha o socket
@@ -137,14 +140,18 @@ public class Cliente {
 
     @Override
     public boolean equals(Object obj) {
-        return this.apelido.equals(((Cliente) obj).apelido);
+        if (!(obj instanceof Cliente)) {
+            return false;
+        }
+        Cliente cliente = (Cliente) obj;
+        return this.apelido.equals(cliente.apelido);
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("Apelido");
-        String apelido = scanner.nextLine();
+        String apelido = scanner.next();
 
         Cliente cliente = new Cliente(apelido);
 

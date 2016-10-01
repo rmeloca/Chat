@@ -33,8 +33,8 @@ public class MulticastListener implements Runnable {
 
     @Override
     public void run() {
-        String mensagemStr = "";
-        Mensagem mensagem = null;
+        String mensagemStr;
+        Mensagem mensagem;
         do {
             try {
                 this.buffer = new byte[1000];
@@ -46,10 +46,15 @@ public class MulticastListener implements Runnable {
                 if (mensagem.getTipo().equals(TipoMensagem.JOIN)) {
                     sendMessage(new Mensagem(TipoMensagem.JOINACK, cliente));
                 }
+                if (mensagem.getTipo().equals(TipoMensagem.LEAVE)) {
+                    if (this.cliente.equals(mensagem.getRemetente())) {
+                        break;
+                    }
+                }
             } catch (IOException ex) {
                 System.err.println("Erro ao receber mensagem");
             }
-        } while (!(mensagem.getTipo().equals(TipoMensagem.LEAVE) && mensagem.getRemetente().equals(this.cliente)));
+        } while (true);
     }
 
     private void sendMessage(Mensagem mensagem) {

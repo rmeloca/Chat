@@ -27,15 +27,15 @@ public class Mensagem {
             case JOINACK:
             case LEAVE:
             case LISTFILES:
-                this.remetente = new Cliente(split[1].substring(1, split[1].length() - 1));
+                this.remetente = new Cliente(split[1].replace("[", "").replace("]", "").trim());
                 break;
             case FILES:
             case DOWNINFO:
                 this.conteudo = split[1];
                 break;
             case MSGIDV:
-                this.remetente = new Cliente(split[2].substring(1, split[2].length() - 1));
-                this.destinatario = new Cliente(split[4].substring(1, split[4].length() - 1));
+                this.remetente = new Cliente(split[2].replace("[", "").replace("]", "").trim());
+                this.destinatario = new Cliente(split[4].replace("[", "").replace("]", "").trim());
                 this.conteudo = split[5];
                 break;
         }
