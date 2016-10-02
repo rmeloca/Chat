@@ -11,11 +11,10 @@ import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -38,7 +37,8 @@ public class ClientGUI extends JFrame {
     private JButton joinButton;
     private JButton leaveButton;
     private JButton sendButton;
-        JTextArea outboxTextArea;
+    JTextArea outboxTextArea;
+    JTextArea inboxTextArea;
 
     public ClientGUI() throws HeadlessException {
         super.setTitle("Chat");
@@ -52,6 +52,16 @@ public class ClientGUI extends JFrame {
         super.add(northPanel, BorderLayout.NORTH);
         super.add(centerPanel, BorderLayout.CENTER);
         super.add(southPanel, BorderLayout.SOUTH);
+
+        PrintStream printStream = new PrintStream(new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                inboxTextArea.append(String.valueOf((char) b));
+                inboxTextArea.setCaretPosition(inboxTextArea.getDocument().getLength());
+            }
+        });
+
+        System.setOut(printStream);
 
         nicknameTextField = new JTextField("Apelido");
         groupTextField = new JTextField("225.1.2.3");
@@ -69,11 +79,7 @@ public class ClientGUI extends JFrame {
                 client = new Client(nicknameTextField.getText());
                 String ip = groupTextField.getText();
                 int port = Integer.valueOf(portTextField.getText());
-                try {
-                    client.joinGroup(InetAddress.getByName(ip), port);
-                } catch (UnknownHostException ex) {
-                    Logger.getLogger(ClientGUI.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                client.joinGroup(ip, port);
             }
         });
 
@@ -90,7 +96,7 @@ public class ClientGUI extends JFrame {
 
                 String ip = groupTextField.getText();
                 int port = Integer.valueOf(portTextField.getText());
-                client.leaveGroup(ip, port);
+                client.leaveGroup();
             }
         });
 
@@ -103,10 +109,9 @@ public class ClientGUI extends JFrame {
         northPanel.add(portTextField);
         northPanel.add(painelJoinLeave);
 
-        JTextArea inboxTextArea = new JTextArea();
+        inboxTextArea = new JTextArea();
         inboxTextArea.setText("Jogar asd sg da");
         inboxTextArea.setEnabled(false);
-
 
         JList<String> onlineJList = new JList<>();
         Vector<String> clients = new Vector<>();

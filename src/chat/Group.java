@@ -12,6 +12,8 @@ import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -44,8 +46,36 @@ public class Group {
         sendMessage(new Message(MessageType.JOIN, this.self));
     }
 
-    public final void sendMessage(Message mensagem) {
-        byte[] bytesMessage = mensagem.toString().getBytes();
+    public synchronized void leaveGroup() {
+        try {
+            sendMessage(new Message(MessageType.LEAVE, this.self));
+            this.multicastSocket.leaveGroup(ip);
+        } catch (IOException ex) {
+            Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            this.multicastSocket.close();
+        }
+    }
+
+    public Client getSelf() {
+        return self;
+    }
+
+    public synchronized final Message retrieveMessage() {
+        try {
+            byte[] buffer = new byte[1000];
+            DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
+            this.multicastSocket.receive(messageIn);
+            String messageStr = new String(messageIn.getData());
+            return new Message(messageStr);
+        } catch (IOException ex) {
+            Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    public synchronized final void sendMessage(Message message) {
+        byte[] bytesMessage = message.toString().getBytes();
         DatagramPacket messageOut;
         try {
             messageOut = new DatagramPacket(bytesMessage, bytesMessage.length, this.ip, this.port);
@@ -55,7 +85,6 @@ public class Group {
         } catch (IOException ex) {
             System.err.println("Erro ao enviar mensagem" + ex.getMessage());
         }
-
     }
 
 }

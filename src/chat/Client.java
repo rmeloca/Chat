@@ -5,8 +5,6 @@
  */
 package chat;
 
-import chat.multicast.MulticastTalker;
-import chat.multicast.MulticastListener;
 import chat.udp.UDPTalker;
 import chat.udp.UDPListener;
 import java.io.IOException;
@@ -15,6 +13,11 @@ import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,13 +54,20 @@ import java.util.logging.Logger;
 public class Client {
 
     private String nickname;
-    private InetAddress ip;
+    private final InetAddress ip;
     private Group group;
+    private final PriorityQueue<Integer> listenToPortQueue;
+    private final Map<InetAddress, PeerConnection> conn;
 
     public Client(String apelido) {
+        this.listenToPortQueue = new PriorityQueue<>();
+        for (int i = 30000; i < 30500; i++) {
+            this.listenToPortQueue.add(i);
+        }
         this.nickname = apelido;
         this.group = null;
         this.ip = null;
+        this.conn = new HashMap<>();
     }
 
     public void setNickname(String nickname) {
@@ -68,58 +78,54 @@ public class Client {
         return nickname;
     }
 
-    public void connectToPeer(int listenToPort, String talkToHost, int talkToPort) {
-        DatagramSocket listenerDatagramSocket = null;
-        DatagramSocket talkerDatagramSocket = null;
+    public void leaveGroup() {
+        this.group.leaveGroup();
+        this.group = null;
+    }
+
+    public void joinGroup(String ip, int port) {
         try {
-            InetAddress inetAddres = InetAddress.getByName(talkToHost);
-
-            listenerDatagramSocket = new DatagramSocket(listenToPort);
-            talkerDatagramSocket = new DatagramSocket();
-
-            talkerDatagramSocket.connect(inetAddres, talkToPort);
-
-            UDPListener udpListener = new UDPListener(listenerDatagramSocket);
-            UDPTalker udpTalker = new UDPTalker(talkerDatagramSocket, this);
-
-            Thread listener = new Thread(udpListener);
-            Thread talker = new Thread(udpTalker);
-
-            talker.start();
-            listener.start();
-
-            talker.join();
-            listener.join();
-
-        } catch (SocketException | UnknownHostException | InterruptedException ex) {
-            throw new RuntimeException(ex.getMessage());
-        } finally {
-            if (listenerDatagramSocket != null) {
-                listenerDatagramSocket.close(); //fecha o socket
-            }
-            if (talkerDatagramSocket != null) {
-                talkerDatagramSocket.close(); //fecha o socket
-            }
+            this.group = new Group(InetAddress.getByName(ip), port, this);
+            Thread thread = new Thread(new MessageCollector(group));
+            thread.start();
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void leaveGroup(String ip, int porta) {
-        MulticastSocket multicastSocket = null;
+    public void sendMessageToGroup(String text) {
+        this.group.sendMessage(new Message(MessageType.MSG, text));
+    }
+
+    public void connectToPeer(String ip, int port) {
+        int listenToPort = this.listenToPortQueue.poll();
         try {
-            InetAddress group = InetAddress.getByName(ip);
-            multicastSocket = new MulticastSocket(porta);
-            multicastSocket.leaveGroup(group);
-        } catch (IOException ex) {
-            System.err.println("Erro ao sair do chat" + ex);
-        } finally {
-            if (multicastSocket != null) {
-                multicastSocket.close(); //fecha o socket
-            }
+            InetAddress addressToTalk = InetAddress.getByName(ip);
+            PeerConnection peerConnection = new PeerConnection(listenToPort, addressToTalk, port);
+            this.conn.put(addressToTalk, peerConnection);
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void joinGroup(InetAddress ip, int porta) {
-        this.group = new Group(ip, porta, this);
+    public void disconnectFromPeer(String ip) {
+        try {
+            InetAddress addressToTalk = InetAddress.getByName(ip);
+            PeerConnection disconnectedPeer = this.conn.remove(addressToTalk);
+            disconnectedPeer.disconnect();
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void sendMessageToPeer(String ip, String text) {
+        try {
+            InetAddress addressToTalk = InetAddress.getByName(ip);
+            PeerConnection peerConnection = this.conn.get(addressToTalk);
+            peerConnection.sendMessage(new Message(MessageType.MSG, text));
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -149,15 +155,7 @@ public class Client {
 //        porta = scanner.nextInt();
         porta = 6789;
 
-        try {
-            cliente.joinGroup(InetAddress.getByName(ip), porta);
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-
-    public void sendMessageToGroup(String text) {
-
+        cliente.joinGroup(ip, porta);
     }
 
 }
