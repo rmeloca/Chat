@@ -6,7 +6,7 @@
 package chat.multicast;
 
 import chat.Buffer;
-import chat.Cliente;
+import chat.Client;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
@@ -18,7 +18,7 @@ public class MulticastInternalTalker extends MulticastTalker {
 
     private final Buffer sharedBuffer;
 
-    public MulticastInternalTalker(MulticastSocket multicastSocket, InetAddress endereco, Cliente cliente, Buffer sharedBuffer) {
+    public MulticastInternalTalker(MulticastSocket multicastSocket, InetAddress endereco, Client cliente, Buffer sharedBuffer) {
         super(multicastSocket, endereco, cliente);
         this.sharedBuffer = sharedBuffer;
     }

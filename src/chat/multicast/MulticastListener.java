@@ -5,9 +5,9 @@
  */
 package chat.multicast;
 
-import chat.Cliente;
-import chat.Mensagem;
-import chat.TipoMensagem;
+import chat.Client;
+import chat.Message;
+import chat.MessageType;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -21,11 +21,11 @@ import java.net.SocketException;
 public class MulticastListener implements Runnable {
 
     private final MulticastSocket multicastSocket;
-    private final Cliente cliente;
+    private final Client cliente;
     private final InetAddress endereco;
     private byte[] buffer;
 
-    public MulticastListener(MulticastSocket multicastSocket, InetAddress endereco, Cliente cliente) {
+    public MulticastListener(MulticastSocket multicastSocket, InetAddress endereco, Client cliente) {
         this.cliente = cliente;
         this.multicastSocket = multicastSocket;
         this.endereco = endereco;
@@ -34,7 +34,7 @@ public class MulticastListener implements Runnable {
     @Override
     public void run() {
         String mensagemStr;
-        Mensagem mensagem;
+        Message mensagem;
         do {
             try {
                 this.buffer = new byte[1000];
@@ -42,11 +42,11 @@ public class MulticastListener implements Runnable {
                 multicastSocket.receive(messageIn);
                 mensagemStr = new String(messageIn.getData());
                 System.out.println("Recebido:" + mensagemStr);
-                mensagem = new Mensagem(mensagemStr);
-                if (mensagem.getTipo().equals(TipoMensagem.JOIN)) {
-                    sendMessage(new Mensagem(TipoMensagem.JOINACK, cliente));
+                mensagem = new Message(mensagemStr);
+                if (mensagem.getTipo().equals(MessageType.JOIN)) {
+                    sendMessage(new Message(MessageType.JOINACK, cliente));
                 }
-                if (mensagem.getTipo().equals(TipoMensagem.LEAVE)) {
+                if (mensagem.getTipo().equals(MessageType.LEAVE)) {
                     if (this.cliente.equals(mensagem.getRemetente())) {
                         break;
                     }
@@ -57,7 +57,7 @@ public class MulticastListener implements Runnable {
         } while (true);
     }
 
-    private void sendMessage(Mensagem mensagem) {
+    private void sendMessage(Message mensagem) {
         byte[] bytesMessage = mensagem.toString().getBytes();
         DatagramPacket messageOut;
         try {

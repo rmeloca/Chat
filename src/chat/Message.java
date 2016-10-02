@@ -9,16 +9,16 @@ package chat;
  *
  * @author romulo
  */
-public class Mensagem {
+public class Message {
 
-    private final TipoMensagem tipo;
-    private Cliente remetente;
-    private Cliente destinatario;
+    private final MessageType tipo;
+    private Client remetente;
+    private Client destinatario;
     private String conteudo;
 
-    public Mensagem(String parseInput) {
+    public Message(String parseInput) {
         String[] split = parseInput.split(" ");
-        this.tipo = TipoMensagem.valueOf(split[0]);
+        this.tipo = MessageType.valueOf(split[0]);
         switch (tipo) {
             case MSG:
             case DOWNFILE:
@@ -27,48 +27,48 @@ public class Mensagem {
             case JOINACK:
             case LEAVE:
             case LISTFILES:
-                this.remetente = new Cliente(split[1].replace("[", "").replace("]", "").trim());
+                this.remetente = new Client(split[1].replace("[", "").replace("]", "").trim());
                 break;
             case FILES:
             case DOWNINFO:
                 this.conteudo = split[1];
                 break;
             case MSGIDV:
-                this.remetente = new Cliente(split[2].replace("[", "").replace("]", "").trim());
-                this.destinatario = new Cliente(split[4].replace("[", "").replace("]", "").trim());
+                this.remetente = new Client(split[2].replace("[", "").replace("]", "").trim());
+                this.destinatario = new Client(split[4].replace("[", "").replace("]", "").trim());
                 this.conteudo = split[5];
                 break;
         }
     }
 
-    public Mensagem(TipoMensagem tipo, Cliente remetente) {
+    public Message(MessageType tipo, Client remetente) {
         this.tipo = tipo;
         this.remetente = remetente;
     }
 
-    public Mensagem(TipoMensagem tipo, Cliente remetente, String conteudo) {
+    public Message(MessageType tipo, Client remetente, String conteudo) {
         this.tipo = tipo;
         this.remetente = remetente;
         this.conteudo = conteudo;
     }
 
-    public Mensagem(TipoMensagem tipo, String conteudo) {
+    public Message(MessageType tipo, String conteudo) {
         this.tipo = tipo;
         this.conteudo = conteudo;
     }
 
-    public Mensagem(TipoMensagem tipo, Cliente remetente, Cliente destinatario, String conteudo) {
+    public Message(MessageType tipo, Client remetente, Client destinatario, String conteudo) {
         this.tipo = tipo;
         this.remetente = remetente;
         this.destinatario = destinatario;
         this.conteudo = conteudo;
     }
 
-    public TipoMensagem getTipo() {
+    public MessageType getTipo() {
         return tipo;
     }
 
-    public Cliente getRemetente() {
+    public Client getRemetente() {
         return remetente;
     }
 
@@ -79,15 +79,15 @@ public class Mensagem {
             case JOINACK:
             case LEAVE:
             case LISTFILES:
-                return tipo.name() + " " + "[" + remetente.getApelido() + "]";
+                return tipo.name() + " " + "[" + remetente.getNickname() + "]";
             case MSG:
             case DOWNFILE:
-                return tipo.name() + " " + "[" + remetente.getApelido() + "]" + " " + conteudo;
+                return tipo.name() + " " + "[" + remetente.getNickname() + "]" + " " + conteudo;
             case FILES:
             case DOWNINFO:
                 return tipo.name() + " " + conteudo;
             case MSGIDV:
-                return tipo.name() + " FROM " + "[" + remetente.getApelido() + "]" + " TO " + "[" + destinatario.getApelido() + "]" + " " + conteudo;
+                return tipo.name() + " FROM " + "[" + remetente.getNickname() + "]" + " TO " + "[" + destinatario.getNickname() + "]" + " " + conteudo;
             default:
                 return null;
         }

@@ -1,8 +1,8 @@
 package chat.udp;
 
-import chat.Cliente;
-import chat.Mensagem;
-import chat.TipoMensagem;
+import chat.Client;
+import chat.Message;
+import chat.MessageType;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -21,9 +21,9 @@ public class UDPTalker implements Runnable {
 
     private final DatagramSocket datagramSocket;
     private byte[] buffer;
-    private final Cliente cliente;
+    private final Client cliente;
 
-    public UDPTalker(DatagramSocket datagramSocket, Cliente cliente) {
+    public UDPTalker(DatagramSocket datagramSocket, Client cliente) {
         this.datagramSocket = datagramSocket;
         this.cliente = cliente;
     }
@@ -37,11 +37,11 @@ public class UDPTalker implements Runnable {
             if (input.contains("EXIT")) {
                 break;
             }
-            sendMessage(new Mensagem(TipoMensagem.MSGIDV, cliente, input));
+            sendMessage(new Message(MessageType.MSGIDV, cliente, input));
         } while (true);
     }
 
-    protected void sendMessage(Mensagem mensagem) {
+    protected void sendMessage(Message mensagem) {
         try {
             buffer = mensagem.toString().getBytes();
             DatagramPacket request = new DatagramPacket(buffer, mensagem.toString().length(), datagramSocket.getInetAddress(), datagramSocket.getPort());

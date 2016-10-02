@@ -9,7 +9,7 @@ package chat;
  *
  * @author romulo
  */
-public enum TipoMensagem {
+public enum MessageType {
     MSG, JOIN, LEAVE, JOINACK, MSGIDV, LISTFILES, FILES, DOWNFILE, DOWNINFO;
 
 }

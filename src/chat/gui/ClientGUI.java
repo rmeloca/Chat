@@ -5,15 +5,14 @@
  */
 package chat.gui;
 
-import chat.Cliente;
+import chat.Client;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.IOException;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
+import java.net.UnknownHostException;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,20 +31,19 @@ import javax.swing.JTextField;
  */
 public class ClientGUI extends JFrame {
 
-    JTextField nicknameTextField;
-    JTextField groupTextField;
-    JTextField portTextField;
-    Cliente client;
-    JButton joinButton;
-    JButton leaveButton;
+    private JTextField nicknameTextField;
+    private JTextField groupTextField;
+    private JTextField portTextField;
+    private Client client;
+    private JButton joinButton;
+    private JButton leaveButton;
+    private JButton sendButton;
+        JTextArea outboxTextArea;
 
     public ClientGUI() throws HeadlessException {
         super.setTitle("Chat");
 
         super.setLayout(new BorderLayout());
-
-        JButton btnJogar = new JButton("Jogar");
-        btnJogar.setBounds(590, 580, 100, 30);
 
         JPanel northPanel = new JPanel(new GridLayout(1, 4));
         JPanel centerPanel = new JPanel(new GridLayout(1, 2));
@@ -68,10 +66,14 @@ public class ClientGUI extends JFrame {
                 nicknameTextField.setEnabled(false);
                 portTextField.setEnabled(false);
                 groupTextField.setEnabled(false);
-                client = new Cliente(nicknameTextField.getText());
+                client = new Client(nicknameTextField.getText());
                 String ip = groupTextField.getText();
                 int port = Integer.valueOf(portTextField.getText());
-                client.joinGroup(ip, port);
+                try {
+                    client.joinGroup(InetAddress.getByName(ip), port);
+                } catch (UnknownHostException ex) {
+                    Logger.getLogger(ClientGUI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
 
@@ -105,7 +107,6 @@ public class ClientGUI extends JFrame {
         inboxTextArea.setText("Jogar asd sg da");
         inboxTextArea.setEnabled(false);
 
-        JTextArea outboxTextArea = new JTextArea("your message");
 
         JList<String> onlineJList = new JList<>();
         Vector<String> clients = new Vector<>();
@@ -134,8 +135,17 @@ public class ClientGUI extends JFrame {
         centerPanel.add(inboxTextArea);
         centerPanel.add(painelOnline);
 
+        outboxTextArea = new JTextArea("your message");
+        sendButton = new JButton("Enviar");
+        sendButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                client.sendMessageToGroup(outboxTextArea.getText());
+            }
+        });
+
         southPanel.add(outboxTextArea);
-        southPanel.add(new JButton("Enviar"));
+        southPanel.add(sendButton);
 
         super.setResizable(false);
         super.setSize(700, 700);

@@ -5,7 +5,7 @@ package chat.udp;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-import chat.Mensagem;
+import chat.Message;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -31,7 +31,7 @@ public class UDPListener implements Runnable {
             DatagramPacket request = new DatagramPacket(buffer, buffer.length);
             try {
                 datagramSocket.receive(request);
-                Mensagem mensagem = new Mensagem(new String(request.getData()));
+                Message mensagem = new Message(new String(request.getData()));
                 System.out.println("Cliente: " + mensagem.toString());
             } catch (IOException ex) {
                 System.err.println("Erro ao ler pacote");

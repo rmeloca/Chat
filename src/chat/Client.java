@@ -16,6 +16,8 @@ import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 //Implementar um serviço de chat que possibilite:
 //- envio de mensagens para um grupo de pessoas (MulticastSocket) - GRUPO 225.1.2.3
@@ -24,43 +26,46 @@ import java.util.Scanner;
 //- interface de interação (GUI ou CLI)
 //
 //- protocolo textual:
-// +  -- JOIN [apelido] 
+// +  -- JOIN [nickname] 
 //   * junta-se ao grupo de conversação 
-// +  -- JOINACK [apelido] 
+// +  -- JOINACK [nickname] 
 //   * resposta ao JOIN para possibilitar a manutenção da lista de usuários ativos
-// +  -- MSG [apelido] "texto"
+// +  -- MSG [nickname] "texto"
 //   * mensagem enviada a todos os membros do grupo pelo IP 225.1.2.3 e porta 6789 
-//   -- MSGIDV FROM [apelido] TO [apelido] "texto" 
+//   -- MSGIDV FROM [nickname] TO [nickname] "texto" 
 //   * mensagem enviada a um membro do grupo para ser recebida na porta 6799
-//   -- LISTFILES [apelido] 
+//   -- LISTFILES [nickname] 
 //   * solicitação de listagem de arquivos para um usuário 
 //   -- FILES [arq1, arq2, arqN] 
 //   * resposta para o LISTFILES
-//   -- DOWNFILE [apelido] filename 
+//   -- DOWNFILE [nickname] filename 
 //   * solicita arquivo do servidor. 
 //   -- DOWNINFO [filename, size, IP, PORTA] 
 //   * resposta com informações sobre o arquivo e conexão TCP. 
-// +  -- LEAVE [apelido]
+// +  -- LEAVE [nickname]
 //   * deixa o grupo de conversação
 /**
  *
  * @author romulo
  */
-public class Cliente {
+public class Client {
 
-    private String apelido;
+    private String nickname;
     private InetAddress ip;
+    private Group group;
 
-    public Cliente(String apelido) {
-        this.apelido = apelido;
+    public Client(String apelido) {
+        this.nickname = apelido;
+        this.group = null;
+        this.ip = null;
     }
 
-    public void setApelido(String apelido) {
-        this.apelido = apelido;
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
-    public String getApelido() {
-        return apelido;
+    public String getNickname() {
+        return nickname;
     }
 
     public void connectToPeer(int listenToPort, String talkToHost, int talkToPort) {
@@ -105,7 +110,7 @@ public class Cliente {
             multicastSocket = new MulticastSocket(porta);
             multicastSocket.leaveGroup(group);
         } catch (IOException ex) {
-            System.err.println("Erro ao sair do chat");
+            System.err.println("Erro ao sair do chat" + ex);
         } finally {
             if (multicastSocket != null) {
                 multicastSocket.close(); //fecha o socket
@@ -113,38 +118,17 @@ public class Cliente {
         }
     }
 
-    public void joinGroup(String ip, int porta) {
-        MulticastSocket multicastSocket = null;
-        try {
-            InetAddress group = InetAddress.getByName(ip);
-            multicastSocket = new MulticastSocket(porta);
-            multicastSocket.joinGroup(group);
-
-            MulticastListener multicastListener = new MulticastListener(multicastSocket, group, this);
-            Thread listenerThread = new Thread(multicastListener);
-
-            MulticastTalker multicastTalker = new MulticastTalker(multicastSocket, group, this);
-            Thread talkerThread = new Thread(multicastTalker);
-
-            listenerThread.start();
-            talkerThread.start();
-
-        } catch (IOException ex) {
-            System.err.println("Erro ao iniciar chat");
-        } finally {
-            if (multicastSocket != null) {
-                multicastSocket.close(); //fecha o socket
-            }
-        }
+    public void joinGroup(InetAddress ip, int porta) {
+        this.group = new Group(ip, porta, this);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Cliente)) {
+        if (!(obj instanceof Client)) {
             return false;
         }
-        Cliente cliente = (Cliente) obj;
-        return this.apelido.equals(cliente.apelido);
+        Client cliente = (Client) obj;
+        return this.nickname.equals(cliente.nickname);
     }
 
     public static void main(String[] args) {
@@ -153,7 +137,7 @@ public class Cliente {
         System.out.println("Apelido");
         String apelido = scanner.next();
 
-        Cliente cliente = new Cliente(apelido);
+        Client cliente = new Client(apelido);
 
 //        System.out.println("IP");
         String ip;
@@ -165,6 +149,15 @@ public class Cliente {
 //        porta = scanner.nextInt();
         porta = 6789;
 
-        cliente.joinGroup(ip, porta);
+        try {
+            cliente.joinGroup(InetAddress.getByName(ip), porta);
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
+
+    public void sendMessageToGroup(String text) {
+
+    }
+
 }

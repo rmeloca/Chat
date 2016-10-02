@@ -13,18 +13,18 @@ import java.util.PriorityQueue;
  */
 public class Buffer {
 
-    private final PriorityQueue<Mensagem> queue;
+    private final PriorityQueue<Message> queue;
 
     public Buffer() {
         this.queue = new PriorityQueue<>();
     }
 
-    public synchronized void add(Mensagem mensagem) {
+    public synchronized void add(Message mensagem) {
         queue.add(mensagem);
         notifyAll();
     }
 
-    public synchronized Mensagem poll() throws InterruptedException {
+    public synchronized Message poll() throws InterruptedException {
         wait();
         return queue.poll();
     }

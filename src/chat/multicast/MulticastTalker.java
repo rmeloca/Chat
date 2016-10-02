@@ -5,9 +5,9 @@
  */
 package chat.multicast;
 
-import chat.Cliente;
-import chat.Mensagem;
-import chat.TipoMensagem;
+import chat.Client;
+import chat.Message;
+import chat.MessageType;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -22,10 +22,10 @@ import java.util.Scanner;
 public class MulticastTalker implements Runnable {
 
     private final MulticastSocket multicastSocket;
-    private final Cliente cliente;
+    private final Client cliente;
     private final InetAddress endereco;
 
-    public MulticastTalker(MulticastSocket multicastSocket, InetAddress endereco, Cliente cliente) {
+    public MulticastTalker(MulticastSocket multicastSocket, InetAddress endereco, Client cliente) {
         this.multicastSocket = multicastSocket;
         this.cliente = cliente;
         this.endereco = endereco;
@@ -34,19 +34,19 @@ public class MulticastTalker implements Runnable {
     @Override
     public void run() {
         Scanner scanner = new Scanner(System.in);
-        sendMessage(new Mensagem(TipoMensagem.JOIN, cliente));
+        sendMessage(new Message(MessageType.JOIN, cliente));
         do {
             System.out.println("Mensagem");
             String mensagem = scanner.nextLine();
             if (mensagem.contains("EXIT")) {
                 break;
             }
-            sendMessage(new Mensagem(TipoMensagem.MSG, cliente, mensagem));
+            sendMessage(new Message(MessageType.MSG, cliente, mensagem));
         } while (true);
-        sendMessage(new Mensagem(TipoMensagem.LEAVE, cliente));
+        sendMessage(new Message(MessageType.LEAVE, cliente));
     }
 
-    protected void sendMessage(Mensagem mensagem) {
+    public void sendMessage(Message mensagem) {
         byte[] bytesMessage = mensagem.toString().getBytes();
         DatagramPacket messageOut;
         try {
