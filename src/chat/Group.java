@@ -50,6 +50,10 @@ public class Group {
         return self;
     }
 
+    public List<Client> getOnline() {
+        return online;
+    }
+
     public void leaveGroup() {
         try {
             sendMessage(new Message(MessageType.LEAVE, this.self));
@@ -69,15 +73,15 @@ public class Group {
             String messageStr = new String(messageIn.getData());
             Message message = new Message(messageStr);
 
-            if (message.getTipo().equals(MessageType.JOIN)) {
+            if (message.getType().equals(MessageType.JOIN)) {
                 InetAddress newClientAddress = messageIn.getAddress();
-                Client newClient = message.getRemetente();
+                Client newClient = message.getSender();
                 newClient.setIp(newClientAddress);
                 this.self.addKnownHost(ip, newClient);
                 this.online.add(newClient);
                 sendMessage(new Message(MessageType.JOINACK, this.self));
-            } else if (message.getTipo().equals(MessageType.LEAVE)) {
-                this.online.remove(new Client(message.getRemetente().getNickname()));
+            } else if (message.getType().equals(MessageType.LEAVE)) {
+                this.online.remove(new Client(message.getSender().getNickname()));
             }
 
             return message;

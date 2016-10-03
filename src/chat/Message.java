@@ -11,16 +11,17 @@ package chat;
  */
 public class Message {
 
-    private final MessageType tipo;
-    private Client remetente;
-    private Client destinatario;
-    private String conteudo = "";
+    private final MessageType type;
+    private Client sender;
+    private Client addressee;
+    private String content;
 
     public Message(String parseInput) {
+        this.content = "";
         String[] split = parseInput.split(" ");
-        this.tipo = MessageType.valueOf(split[0]);
+        this.type = MessageType.valueOf(split[0]);
         int init = 0;
-        switch (tipo) {
+        switch (type) {
             case MSG:
             case DOWNFILE:
                 init = 2;
@@ -28,71 +29,75 @@ public class Message {
             case JOINACK:
             case LEAVE:
             case LISTFILES:
-                this.remetente = new Client(split[1].replace("[", "").replace("]", "").trim());
+                this.sender = new Client(split[1].replace("[", "").replace("]", "").trim());
                 break;
             case FILES:
             case DOWNINFO:
                 init = 1;
                 break;
             case MSGIDV:
-                this.remetente = new Client(split[2].replace("[", "").replace("]", "").trim());
-                this.destinatario = new Client(split[4].replace("[", "").replace("]", "").trim());
+                this.sender = new Client(split[2].replace("[", "").replace("]", "").trim());
+                this.addressee = new Client(split[4].replace("[", "").replace("]", "").trim());
                 init = 5;
                 break;
         }
         for (int i = init; i < split.length; i++) {
-            this.conteudo += split[i];
-            this.conteudo += " ";
+            this.content += split[i];
+            this.content += " ";
         }
     }
 
     public Message(MessageType tipo, Client remetente) {
-        this.tipo = tipo;
-        this.remetente = remetente;
+        this.content = "";
+        this.type = tipo;
+        this.sender = remetente;
     }
 
     public Message(MessageType tipo, Client remetente, String conteudo) {
-        this.tipo = tipo;
-        this.remetente = remetente;
-        this.conteudo = conteudo;
+        this.content = "";
+        this.type = tipo;
+        this.sender = remetente;
+        this.content = conteudo;
     }
 
     public Message(MessageType tipo, String conteudo) {
-        this.tipo = tipo;
-        this.conteudo = conteudo;
+        this.content = "";
+        this.type = tipo;
+        this.content = conteudo;
     }
 
     public Message(MessageType tipo, Client remetente, Client destinatario, String conteudo) {
-        this.tipo = tipo;
-        this.remetente = remetente;
-        this.destinatario = destinatario;
-        this.conteudo = conteudo;
+        this.content = "";
+        this.type = tipo;
+        this.sender = remetente;
+        this.addressee = destinatario;
+        this.content = conteudo;
     }
 
-    public MessageType getTipo() {
-        return tipo;
+    public MessageType getType() {
+        return type;
     }
 
-    public Client getRemetente() {
-        return remetente;
+    public Client getSender() {
+        return sender;
     }
 
     @Override
     public String toString() {
-        switch (tipo) {
+        switch (type) {
             case JOIN:
             case JOINACK:
             case LEAVE:
             case LISTFILES:
-                return tipo.name() + " " + "[" + remetente.getNickname() + "]";
+                return type.name() + " " + "[" + sender.getNickname() + "]";
             case MSG:
             case DOWNFILE:
-                return tipo.name() + " " + "[" + remetente.getNickname() + "]" + " " + conteudo;
+                return type.name() + " " + "[" + sender.getNickname() + "]" + " " + content;
             case FILES:
             case DOWNINFO:
-                return tipo.name() + " " + conteudo;
+                return type.name() + " " + content;
             case MSGIDV:
-                return tipo.name() + " FROM " + "[" + remetente.getNickname() + "]" + " TO " + "[" + destinatario.getNickname() + "]" + " " + conteudo;
+                return type.name() + " FROM " + "[" + sender.getNickname() + "]" + " TO " + "[" + addressee.getNickname() + "]" + " " + content;
             default:
                 return null;
         }

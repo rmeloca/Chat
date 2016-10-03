@@ -21,7 +21,7 @@ public class GroupMessageCollector implements Runnable {
     public void run() {
         while (true) {
             Message retrieveMessage = group.retrieveMessage();
-            if (retrieveMessage.getTipo().equals(MessageType.LEAVE) && retrieveMessage.getRemetente().equals(group.getSelf())) {
+            if (retrieveMessage.getType().equals(MessageType.LEAVE) && retrieveMessage.getSender().equals(group.getSelf())) {
                 break;
             }
             System.out.println(retrieveMessage.toString());

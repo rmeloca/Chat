@@ -43,11 +43,11 @@ public class MulticastListener implements Runnable {
                 mensagemStr = new String(messageIn.getData());
                 System.out.println("Recebido:" + mensagemStr);
                 mensagem = new Message(mensagemStr);
-                if (mensagem.getTipo().equals(MessageType.JOIN)) {
+                if (mensagem.getType().equals(MessageType.JOIN)) {
                     sendMessage(new Message(MessageType.JOINACK, cliente));
                 }
-                if (mensagem.getTipo().equals(MessageType.LEAVE)) {
-                    if (this.cliente.equals(mensagem.getRemetente())) {
+                if (mensagem.getType().equals(MessageType.LEAVE)) {
+                    if (this.cliente.equals(mensagem.getSender())) {
                         break;
                     }
                 }

@@ -7,7 +7,9 @@ package chat;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Scanner;
@@ -52,8 +54,8 @@ public class Client {
     private final Map<InetAddress, PeerConnection> connections;
     private final Map<InetAddress, Client> knownHosts;
 
-    public Client(String apelido) {
-        this.nickname = apelido;
+    public Client(String nickname) {
+        this.nickname = nickname;
         this.group = null;
         this.connections = new HashMap<>();
         this.knownHosts = new HashMap<>();
@@ -86,6 +88,18 @@ public class Client {
 
     public void addKnownHost(InetAddress ip, Client client) {
         this.knownHosts.put(ip, client);
+    }
+
+    public List<String> getOnlineNicknames() {
+        if (group != null) {
+            List<String> onlineNicknames = new ArrayList<>();
+            List<Client> online = this.group.getOnline();
+            for (Client client : online) {
+                onlineNicknames.add(client.nickname);
+            }
+            return onlineNicknames;
+        }
+        return null;
     }
 
     public void leaveGroup() {

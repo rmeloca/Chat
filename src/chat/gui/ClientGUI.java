@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Vector;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -76,6 +77,7 @@ public class ClientGUI extends JFrame {
                 nicknameTextField.setEnabled(false);
                 portTextField.setEnabled(false);
                 groupTextField.setEnabled(false);
+                sendButton.setEnabled(true);
                 client = new Client(nicknameTextField.getText());
                 String ip = groupTextField.getText();
                 int port = Integer.valueOf(portTextField.getText());
@@ -93,7 +95,7 @@ public class ClientGUI extends JFrame {
                 nicknameTextField.setEnabled(true);
                 portTextField.setEnabled(true);
                 groupTextField.setEnabled(true);
-
+                sendButton.setEnabled(false);
                 String ip = groupTextField.getText();
                 int port = Integer.valueOf(portTextField.getText());
                 client.leaveGroup();
@@ -114,12 +116,12 @@ public class ClientGUI extends JFrame {
         inboxTextArea.setEnabled(false);
 
         JList<String> onlineJList = new JList<>();
-        Vector<String> clients = new Vector<>();
-        clients.add("romulo1");
-        clients.add("romulo2");
-        clients.add("romulo3");
-        clients.add("romulo4");
-        onlineJList.setListData(clients);
+        if (client != null) {
+            List<String> online = this.client.getOnlineNicknames();
+            if (online != null) {
+                onlineJList.setListData((String[]) online.toArray());
+            }
+        }
 
         JRadioButton messageToAll = new JRadioButton("Todos");
         messageToAll.setSelected(true);
@@ -142,6 +144,7 @@ public class ClientGUI extends JFrame {
 
         outboxTextArea = new JTextArea("your message");
         sendButton = new JButton("Enviar");
+        sendButton.setEnabled(false);
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
