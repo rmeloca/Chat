@@ -5,17 +5,9 @@
  */
 package chat;
 
-import chat.udp.UDPTalker;
-import chat.udp.UDPListener;
-import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.MulticastSocket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Scanner;
@@ -54,20 +46,30 @@ import java.util.logging.Logger;
 public class Client {
 
     private String nickname;
-    private final InetAddress ip;
+    private InetAddress ip;
     private Group group;
     private final PriorityQueue<Integer> listenToPortQueue;
-    private final Map<InetAddress, PeerConnection> conn;
+    private final Map<InetAddress, PeerConnection> connections;
+    private final Map<InetAddress, Client> knownHosts;
 
     public Client(String apelido) {
+        this.nickname = apelido;
+        this.group = null;
+        this.connections = new HashMap<>();
+        this.knownHosts = new HashMap<>();
+
         this.listenToPortQueue = new PriorityQueue<>();
         for (int i = 30000; i < 30500; i++) {
             this.listenToPortQueue.add(i);
         }
-        this.nickname = apelido;
-        this.group = null;
-        this.ip = null;
-        this.conn = new HashMap<>();
+
+        InetAddress ip = null;
+        try {
+            ip = InetAddress.getLocalHost();
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        this.ip = ip;
     }
 
     public void setNickname(String nickname) {
@@ -78,6 +80,14 @@ public class Client {
         return nickname;
     }
 
+    public void setIp(InetAddress ip) {
+        this.ip = ip;
+    }
+
+    public void addKnownHost(InetAddress ip, Client client) {
+        this.knownHosts.put(ip, client);
+    }
+
     public void leaveGroup() {
         this.group.leaveGroup();
         this.group = null;
@@ -86,7 +96,7 @@ public class Client {
     public void joinGroup(String ip, int port) {
         try {
             this.group = new Group(InetAddress.getByName(ip), port, this);
-            Thread thread = new Thread(new MessageCollector(group));
+            Thread thread = new Thread(new GroupMessageCollector(group));
             thread.start();
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
@@ -101,8 +111,8 @@ public class Client {
         int listenToPort = this.listenToPortQueue.poll();
         try {
             InetAddress addressToTalk = InetAddress.getByName(ip);
-            PeerConnection peerConnection = new PeerConnection(listenToPort, addressToTalk, port);
-            this.conn.put(addressToTalk, peerConnection);
+            PeerConnection peerConnection = new PeerConnection(listenToPort, addressToTalk, port, this.knownHosts.get(addressToTalk));
+            this.connections.put(addressToTalk, peerConnection);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -111,8 +121,9 @@ public class Client {
     public void disconnectFromPeer(String ip) {
         try {
             InetAddress addressToTalk = InetAddress.getByName(ip);
-            PeerConnection disconnectedPeer = this.conn.remove(addressToTalk);
+            PeerConnection disconnectedPeer = this.connections.remove(addressToTalk);
             disconnectedPeer.disconnect();
+            this.listenToPortQueue.add(disconnectedPeer.getListenToPort());
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -121,8 +132,8 @@ public class Client {
     public void sendMessageToPeer(String ip, String text) {
         try {
             InetAddress addressToTalk = InetAddress.getByName(ip);
-            PeerConnection peerConnection = this.conn.get(addressToTalk);
-            peerConnection.sendMessage(new Message(MessageType.MSG, text));
+            PeerConnection peerConnection = this.connections.get(addressToTalk);
+            peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), text));
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }

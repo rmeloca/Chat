@@ -24,8 +24,9 @@ public class PeerConnection {
     private final int talkToPort;
     private final DatagramSocket listenerDatagramSocket;
     private final DatagramSocket talkerDatagramSocket;
+    private final Client client;
 
-    public PeerConnection(int listenToPort, InetAddress talkToHost, int talkToPort) {
+    public PeerConnection(int listenToPort, InetAddress talkToHost, int talkToPort, Client client) {
         this.listenToPort = listenToPort;
         this.talkToHost = talkToHost;
         this.talkToPort = talkToPort;
@@ -42,10 +43,19 @@ public class PeerConnection {
 
         this.listenerDatagramSocket = listenerDatagramSocket;
         this.talkerDatagramSocket = talkerDatagramSocket;
+        this.client = client;
+    }
+
+    public int getListenToPort() {
+        return listenToPort;
     }
 
     public InetAddress getHostAddress() {
         return talkToHost;
+    }
+
+    public Client getClient() {
+        return client;
     }
 
     public synchronized void disconnect() {

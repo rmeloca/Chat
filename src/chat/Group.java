@@ -46,6 +46,10 @@ public class Group {
         sendMessage(new Message(MessageType.JOIN, this.self));
     }
 
+    public Client getSelf() {
+        return self;
+    }
+
     public synchronized void leaveGroup() {
         try {
             sendMessage(new Message(MessageType.LEAVE, this.self));
@@ -57,17 +61,26 @@ public class Group {
         }
     }
 
-    public Client getSelf() {
-        return self;
-    }
-
     public synchronized final Message retrieveMessage() {
         try {
             byte[] buffer = new byte[1000];
             DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
             this.multicastSocket.receive(messageIn);
             String messageStr = new String(messageIn.getData());
-            return new Message(messageStr);
+            Message message = new Message(messageStr);
+
+            if (message.getTipo().equals(MessageType.JOIN)) {
+                InetAddress newClientAddress = messageIn.getAddress();
+                Client newClient = message.getRemetente();
+                newClient.setIp(newClientAddress);
+                this.self.addKnownHost(ip, newClient);
+                this.online.add(newClient);
+                sendMessage(new Message(MessageType.JOINACK, this.self));
+            } else if (message.getTipo().equals(MessageType.LEAVE)) {
+                this.online.remove(new Client(message.getRemetente().getNickname()));
+            }
+
+            return message;
         } catch (IOException ex) {
             Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
         }

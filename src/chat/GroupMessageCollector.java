@@ -9,11 +9,11 @@ package chat;
  *
  * @author romulo
  */
-public class MessageCollector implements Runnable {
+public class GroupMessageCollector implements Runnable {
 
     private final Group group;
 
-    public MessageCollector(Group group) {
+    public GroupMessageCollector(Group group) {
         this.group = group;
     }
 
@@ -21,9 +21,6 @@ public class MessageCollector implements Runnable {
     public void run() {
         while (true) {
             Message retrieveMessage = group.retrieveMessage();
-            if (retrieveMessage.getTipo().equals(MessageType.JOIN)) {
-                group.sendMessage(new Message(MessageType.JOINACK, group.getSelf()));
-            }
             if (retrieveMessage.getTipo().equals(MessageType.LEAVE) && retrieveMessage.getRemetente().equals(group.getSelf())) {
                 break;
             }
