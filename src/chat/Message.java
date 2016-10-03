@@ -14,15 +14,16 @@ public class Message {
     private final MessageType tipo;
     private Client remetente;
     private Client destinatario;
-    private String conteudo;
+    private String conteudo = "";
 
     public Message(String parseInput) {
         String[] split = parseInput.split(" ");
         this.tipo = MessageType.valueOf(split[0]);
+        int init = 0;
         switch (tipo) {
             case MSG:
             case DOWNFILE:
-                this.conteudo = split[2];
+                init = 2;
             case JOIN:
             case JOINACK:
             case LEAVE:
@@ -31,13 +32,17 @@ public class Message {
                 break;
             case FILES:
             case DOWNINFO:
-                this.conteudo = split[1];
+                init = 1;
                 break;
             case MSGIDV:
                 this.remetente = new Client(split[2].replace("[", "").replace("]", "").trim());
                 this.destinatario = new Client(split[4].replace("[", "").replace("]", "").trim());
-                this.conteudo = split[5];
+                init = 5;
                 break;
+        }
+        for (int i = init; i < split.length; i++) {
+            this.conteudo += split[i];
+            this.conteudo += " ";
         }
     }
 

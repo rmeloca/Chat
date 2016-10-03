@@ -50,7 +50,7 @@ public class Group {
         return self;
     }
 
-    public synchronized void leaveGroup() {
+    public void leaveGroup() {
         try {
             sendMessage(new Message(MessageType.LEAVE, this.self));
             this.multicastSocket.leaveGroup(ip);
@@ -61,7 +61,7 @@ public class Group {
         }
     }
 
-    public synchronized final Message retrieveMessage() {
+    public final Message retrieveMessage() {
         try {
             byte[] buffer = new byte[1000];
             DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
@@ -87,7 +87,7 @@ public class Group {
         return null;
     }
 
-    public synchronized final void sendMessage(Message message) {
+    public final void sendMessage(Message message) {
         byte[] bytesMessage = message.toString().getBytes();
         DatagramPacket messageOut;
         try {

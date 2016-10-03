@@ -58,12 +58,12 @@ public class PeerConnection {
         return client;
     }
 
-    public synchronized void disconnect() {
+    public void disconnect() {
         this.listenerDatagramSocket.close();
         this.talkerDatagramSocket.close();
     }
 
-    public synchronized final void sendMessage(Message message) {
+    public final void sendMessage(Message message) {
         byte[] bytesMessage = message.toString().getBytes();
         DatagramPacket messageOut;
         try {
@@ -76,7 +76,7 @@ public class PeerConnection {
         }
     }
 
-    public synchronized final Message retrieveMessage() {
+    public final Message retrieveMessage() {
         try {
             byte[] buffer = new byte[1000];
             DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);

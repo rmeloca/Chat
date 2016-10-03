@@ -104,7 +104,7 @@ public class Client {
     }
 
     public void sendMessageToGroup(String text) {
-        this.group.sendMessage(new Message(MessageType.MSG, text));
+        this.group.sendMessage(new Message(MessageType.MSG, this, text));
     }
 
     public void connectToPeer(String ip, int port) {
