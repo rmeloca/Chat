@@ -86,6 +86,10 @@ public class Client {
         this.ip = ip;
     }
 
+    public Group getGroup() {
+        return group;
+    }
+
     public void addKnownHost(InetAddress ip, Client client) {
         this.knownHosts.put(ip, client);
     }

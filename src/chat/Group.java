@@ -12,6 +12,7 @@ import java.net.MulticastSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +20,7 @@ import java.util.logging.Logger;
  *
  * @author romulo
  */
-public class Group {
+public class Group extends Observable {
 
     private final Client self;
     private final InetAddress ip;
@@ -78,10 +79,10 @@ public class Group {
                 Client newClient = message.getSender();
                 newClient.setIp(newClientAddress);
                 this.self.addKnownHost(ip, newClient);
-                this.online.add(newClient);
+                addOnline(newClient);
                 sendMessage(new Message(MessageType.JOINACK, this.self));
             } else if (message.getType().equals(MessageType.LEAVE)) {
-                this.online.remove(new Client(message.getSender().getNickname()));
+                removeOnline(new Client(message.getSender().getNickname()));
             }
 
             return message;
@@ -89,6 +90,18 @@ public class Group {
             Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
+    }
+
+    private void addOnline(Client client) {
+        this.online.add(client);
+        setChanged();
+        notifyObservers();
+    }
+
+    private void removeOnline(Client client) {
+        this.online.remove(client);
+        setChanged();
+        notifyObservers();
     }
 
     public final void sendMessage(Message message) {

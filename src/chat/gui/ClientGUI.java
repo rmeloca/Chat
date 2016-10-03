@@ -15,7 +15,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
-import java.util.Vector;
+import java.util.Observable;
+import java.util.Observer;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -29,7 +30,7 @@ import javax.swing.JTextField;
  *
  * @author romulo
  */
-public class ClientGUI extends JFrame {
+public class ClientGUI extends JFrame implements Observer {
 
     private JTextField nicknameTextField;
     private JTextField groupTextField;
@@ -38,8 +39,9 @@ public class ClientGUI extends JFrame {
     private JButton joinButton;
     private JButton leaveButton;
     private JButton sendButton;
-    JTextArea outboxTextArea;
-    JTextArea inboxTextArea;
+    private JTextArea outboxTextArea;
+    private JTextArea inboxTextArea;
+    private JList<String> onlineJList;
 
     public ClientGUI() throws HeadlessException {
         super.setTitle("Chat");
@@ -82,6 +84,8 @@ public class ClientGUI extends JFrame {
                 String ip = groupTextField.getText();
                 int port = Integer.valueOf(portTextField.getText());
                 client.joinGroup(ip, port);
+
+                client.getGroup().addObserver(ClientGUI.this);
             }
         });
 
@@ -112,16 +116,9 @@ public class ClientGUI extends JFrame {
         northPanel.add(painelJoinLeave);
 
         inboxTextArea = new JTextArea();
-        inboxTextArea.setText("Jogar asd sg da");
         inboxTextArea.setEnabled(false);
 
-        JList<String> onlineJList = new JList<>();
-        if (client != null) {
-            List<String> online = this.client.getOnlineNicknames();
-            if (online != null) {
-                onlineJList.setListData((String[]) online.toArray());
-            }
-        }
+        onlineJList = new JList<>();
 
         JRadioButton messageToAll = new JRadioButton("Todos");
         messageToAll.setSelected(true);
@@ -161,7 +158,21 @@ public class ClientGUI extends JFrame {
         super.setVisible(true);
     }
 
+    @Override
+    public void update(Observable o, Object arg) {
+        if (client != null) {
+            List<String> online = this.client.getOnlineNicknames();
+            if (online != null) {
+                onlineJList.setListData(online.toArray(new String[online.size()]));
+                onlineJList.setSelectedIndex(0);
+            }else{
+                onlineJList.setListData(new String[0]);
+            }
+        }
+    }
+
     public static void main(String[] args) {
         new ClientGUI();
     }
+
 }
