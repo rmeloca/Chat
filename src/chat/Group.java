@@ -78,7 +78,7 @@ public class Group extends Observable {
                 InetAddress newClientAddress = messageIn.getAddress();
                 Client newClient = message.getSender();
                 newClient.setIp(newClientAddress);
-                this.self.addKnownHost(ip, newClient);
+                this.self.addKnownHost(newClientAddress, newClient);
                 addOnline(newClient);
                 sendMessage(new Message(MessageType.JOINACK, this.self));
             } else if (message.getType().equals(MessageType.LEAVE)) {

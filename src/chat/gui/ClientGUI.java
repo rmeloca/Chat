@@ -15,15 +15,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
@@ -77,18 +82,16 @@ public class ClientGUI extends JFrame implements Observer {
         joinButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                joinButton.setEnabled(false);
-                leaveButton.setEnabled(true);
-                nicknameTextField.setEnabled(false);
-                portTextField.setEnabled(false);
-                groupTextField.setEnabled(false);
-                sendButton.setEnabled(true);
                 client = new Client(nicknameTextField.getText());
                 String ip = groupTextField.getText();
                 int port = Integer.valueOf(portTextField.getText());
-                client.joinGroup(ip, port);
-
-                client.getGroup().addObserver(ClientGUI.this);
+                try {
+                    client.joinGroup(InetAddress.getByName(ip), port);
+                    client.getGroup().addObserver(ClientGUI.this);
+                    blockInterface();
+                } catch (UnknownHostException ex) {
+                    JOptionPane.showMessageDialog(rootPane, "Ip Incorreto");
+                }
             }
         });
 
@@ -97,12 +100,7 @@ public class ClientGUI extends JFrame implements Observer {
         leaveButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                leaveButton.setEnabled(false);
-                joinButton.setEnabled(true);
-                nicknameTextField.setEnabled(true);
-                portTextField.setEnabled(true);
-                groupTextField.setEnabled(true);
-                sendButton.setEnabled(false);
+                releaseInterface();
                 client.leaveGroup();
             }
         });
@@ -118,6 +116,7 @@ public class ClientGUI extends JFrame implements Observer {
 
         inboxTextArea = new JTextArea();
         inboxTextArea.setEnabled(false);
+        JScrollPane scrollPane = new JScrollPane(inboxTextArea);
 
         onlineJList = new JList<>();
 
@@ -137,7 +136,7 @@ public class ClientGUI extends JFrame implements Observer {
         painelOnline.add(painelMessageTo);
         painelOnline.add(onlineJList);
 
-        centerPanel.add(inboxTextArea);
+        centerPanel.add(scrollPane);
         centerPanel.add(painelOnline);
 
         outboxTextArea = new JTextArea("your message");
@@ -151,7 +150,7 @@ public class ClientGUI extends JFrame implements Observer {
                 } else if (messageToPeer.isSelected()) {
                     String selectedNickname = onlineJList.getSelectedValue();
                     InetAddress findIpByNickname = client.findIpByNickname(selectedNickname);
-                    client.sendMessageToPeer(findIpByNickname.getHostName(), outboxTextArea.getText());
+                    client.sendMessageToPeer(findIpByNickname, outboxTextArea.getText());
                 }
             }
         });
@@ -163,6 +162,23 @@ public class ClientGUI extends JFrame implements Observer {
         super.setSize(700, 700);
         super.setDefaultCloseOperation(EXIT_ON_CLOSE);
         super.setVisible(true);
+    }
+
+    private void releaseInterface(boolean release) {
+        leaveButton.setEnabled(!release);
+        joinButton.setEnabled(release);
+        nicknameTextField.setEnabled(release);
+        portTextField.setEnabled(release);
+        groupTextField.setEnabled(release);
+        sendButton.setEnabled(!release);
+    }
+
+    private void releaseInterface() {
+        releaseInterface(true);
+    }
+
+    private void blockInterface() {
+        releaseInterface(false);
     }
 
     @Override

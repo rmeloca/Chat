@@ -120,56 +120,36 @@ public class Client {
         this.group = null;
     }
 
-    public void joinGroup(String ip, int port) {
-        try {
-            this.group = new Group(InetAddress.getByName(ip), port, this);
-            Thread thread = new Thread(new GroupMessageCollector(group));
-            thread.start();
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public void joinGroup(InetAddress ip, int port) {
+        this.group = new Group(ip, port, this);
+        Thread thread = new Thread(new GroupMessageCollector(group));
+        thread.start();
     }
 
     public void sendMessageToGroup(String text) {
         this.group.sendMessage(new Message(MessageType.MSG, this, text));
     }
 
-    public void connectToPeer(String ip, int port) {
+    public void connectToPeer(InetAddress ip, int port) {
         int listenToPort = this.listenToPortQueue.poll();
-        try {
-            InetAddress addressToTalk = InetAddress.getByName(ip);
-            Client client = this.knownHosts.get(addressToTalk);
-            PeerConnection peerConnection = new PeerConnection(listenToPort, addressToTalk, port, client);
-            this.connections.put(addressToTalk, peerConnection);
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        Client client = this.knownHosts.get(ip);
+        PeerConnection peerConnection = new PeerConnection(listenToPort, ip, port, client);
+        this.connections.put(ip, peerConnection);
     }
 
-    public void disconnectFromPeer(String ip) {
-        try {
-            InetAddress addressToTalk = InetAddress.getByName(ip);
-            PeerConnection disconnectedPeer = this.connections.remove(addressToTalk);
-            disconnectedPeer.disconnect();
-            this.listenToPortQueue.add(disconnectedPeer.getListenToPort());
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public void disconnectFromPeer(InetAddress ip) {
+        PeerConnection disconnectedPeer = this.connections.remove(ip);
+        disconnectedPeer.disconnect();
+        this.listenToPortQueue.add(disconnectedPeer.getListenToPort());
     }
 
-    public void sendMessageToPeer(String ip, String text) {
-        try {
-            InetAddress addressToTalk = InetAddress.getByName(ip);
-            PeerConnection peerConnection;
-            peerConnection = this.connections.get(addressToTalk);
-            if (peerConnection == null) {
-                connectToPeer(ip, 10000);
-                peerConnection = this.connections.get(addressToTalk);
-            }
-            peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), text));
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+    public void sendMessageToPeer(InetAddress ip, String text) {
+        PeerConnection peerConnection = this.connections.get(ip);
+        if (peerConnection == null) {
+            connectToPeer(ip, 10000);
+            peerConnection = this.connections.get(ip);
         }
+        peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), text));
     }
 
     @Override
@@ -199,7 +179,11 @@ public class Client {
 //        porta = scanner.nextInt();
         porta = 6789;
 
-        cliente.joinGroup(ip, porta);
+        try {
+            cliente.joinGroup(InetAddress.getByName(ip), porta);
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
 }
