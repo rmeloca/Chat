@@ -94,6 +94,15 @@ public class Client {
         this.knownHosts.put(ip, client);
     }
 
+    public InetAddress findIpByNickname(String nickname) {
+        for (Client client : knownHosts.values()) {
+            if (client.getNickname().equals(nickname)) {
+                return client.ip;
+            }
+        }
+        return null;
+    }
+
     public List<String> getOnlineNicknames() {
         if (group != null) {
             List<String> onlineNicknames = new ArrayList<>();
@@ -129,7 +138,8 @@ public class Client {
         int listenToPort = this.listenToPortQueue.poll();
         try {
             InetAddress addressToTalk = InetAddress.getByName(ip);
-            PeerConnection peerConnection = new PeerConnection(listenToPort, addressToTalk, port, this.knownHosts.get(addressToTalk));
+            Client client = this.knownHosts.get(addressToTalk);
+            PeerConnection peerConnection = new PeerConnection(listenToPort, addressToTalk, port, client);
             this.connections.put(addressToTalk, peerConnection);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
@@ -150,7 +160,12 @@ public class Client {
     public void sendMessageToPeer(String ip, String text) {
         try {
             InetAddress addressToTalk = InetAddress.getByName(ip);
-            PeerConnection peerConnection = this.connections.get(addressToTalk);
+            PeerConnection peerConnection;
+            peerConnection = this.connections.get(addressToTalk);
+            if (peerConnection == null) {
+                connectToPeer(ip, 10000);
+                peerConnection = this.connections.get(addressToTalk);
+            }
             peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), text));
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);

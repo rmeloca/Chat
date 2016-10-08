@@ -14,6 +14,7 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -42,6 +43,8 @@ public class ClientGUI extends JFrame implements Observer {
     private JTextArea outboxTextArea;
     private JTextArea inboxTextArea;
     private JList<String> onlineJList;
+    private JRadioButton messageToAll;
+    private JRadioButton messageToPeer;
 
     public ClientGUI() throws HeadlessException {
         super.setTitle("Chat");
@@ -100,8 +103,6 @@ public class ClientGUI extends JFrame implements Observer {
                 portTextField.setEnabled(true);
                 groupTextField.setEnabled(true);
                 sendButton.setEnabled(false);
-                String ip = groupTextField.getText();
-                int port = Integer.valueOf(portTextField.getText());
                 client.leaveGroup();
             }
         });
@@ -120,9 +121,9 @@ public class ClientGUI extends JFrame implements Observer {
 
         onlineJList = new JList<>();
 
-        JRadioButton messageToAll = new JRadioButton("Todos");
+        messageToAll = new JRadioButton("Todos");
         messageToAll.setSelected(true);
-        JRadioButton messageToPeer = new JRadioButton("Individual");
+        messageToPeer = new JRadioButton("Individual");
 
         ButtonGroup messageTo = new ButtonGroup();
         messageTo.add(messageToAll);
@@ -145,7 +146,13 @@ public class ClientGUI extends JFrame implements Observer {
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                client.sendMessageToGroup(outboxTextArea.getText());
+                if (messageToAll.isSelected()) {
+                    client.sendMessageToGroup(outboxTextArea.getText());
+                } else if (messageToPeer.isSelected()) {
+                    String selectedNickname = onlineJList.getSelectedValue();
+                    InetAddress findIpByNickname = client.findIpByNickname(selectedNickname);
+                    client.sendMessageToPeer(findIpByNickname.getHostName(), outboxTextArea.getText());
+                }
             }
         });
 
@@ -165,7 +172,7 @@ public class ClientGUI extends JFrame implements Observer {
             if (online != null) {
                 onlineJList.setListData(online.toArray(new String[online.size()]));
                 onlineJList.setSelectedIndex(0);
-            }else{
+            } else {
                 onlineJList.setListData(new String[0]);
             }
         }
