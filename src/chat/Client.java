@@ -133,8 +133,10 @@ public class Client {
     public void connectToPeer(InetAddress ip, int port) {
         int listenToPort = this.listenToPortQueue.poll();
         Client client = this.knownHosts.get(ip);
-        PeerConnection peerConnection = new PeerConnection(listenToPort, ip, port, client);
+        PeerConnection peerConnection = new PeerConnection(port, ip, port, client);
         this.connections.put(ip, peerConnection);
+        Thread thread = new Thread(new PeerMessageCollector(peerConnection));
+        thread.start();
     }
 
     public void disconnectFromPeer(InetAddress ip) {
@@ -148,6 +150,7 @@ public class Client {
         if (peerConnection == null) {
             connectToPeer(ip, 10000);
             peerConnection = this.connections.get(ip);
+            this.group.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), ""));
         }
         peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), text));
     }

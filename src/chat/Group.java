@@ -74,17 +74,25 @@ public class Group extends Observable {
             String messageStr = new String(messageIn.getData());
             Message message = new Message(messageStr);
 
-            if (message.getType().equals(MessageType.JOIN)) {
-                InetAddress newClientAddress = messageIn.getAddress();
-                Client newClient = message.getSender();
-                newClient.setIp(newClientAddress);
-                this.self.addKnownHost(newClientAddress, newClient);
-                addOnline(newClient);
-                sendMessage(new Message(MessageType.JOINACK, this.self));
-            } else if (message.getType().equals(MessageType.LEAVE)) {
-                removeOnline(new Client(message.getSender().getNickname()));
+            switch (message.getType()) {
+                case JOIN:
+                    sendMessage(new Message(MessageType.JOINACK, this.self));
+                case JOINACK:
+                    InetAddress newClientAddress = messageIn.getAddress();
+                    Client newClient = message.getSender();
+                    newClient.setIp(newClientAddress);
+                    this.self.addKnownHost(newClientAddress, newClient);
+                    addOnline(newClient);
+                    break;
+                case MSGIDV:
+                    if (message.getAddressee().equals(this.self)) {
+                        this.self.connectToPeer(messageIn.getAddress(), 10000);
+                    }
+                    break;
+                case LEAVE:
+                    removeOnline(new Client(message.getSender().getNickname()));
+                    break;
             }
-
             return message;
         } catch (IOException ex) {
             Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
@@ -93,9 +101,11 @@ public class Group extends Observable {
     }
 
     private void addOnline(Client client) {
-        this.online.add(client);
-        setChanged();
-        notifyObservers();
+        if (!this.online.contains(client)) {
+            this.online.add(client);
+            notifyObservers();
+            setChanged();
+        }
     }
 
     private void removeOnline(Client client) {

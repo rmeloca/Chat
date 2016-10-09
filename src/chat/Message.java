@@ -82,6 +82,10 @@ public class Message {
         return sender;
     }
 
+    public Client getAddressee() {
+        return addressee;
+    }
+
     @Override
     public String toString() {
         switch (type) {

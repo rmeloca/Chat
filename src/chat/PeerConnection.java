@@ -5,13 +5,21 @@
  */
 package chat;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 /**
  *
@@ -76,13 +84,39 @@ public class PeerConnection {
         }
     }
 
+    private String ls(String folder) {
+        InputStream inputStream = getClass().getResourceAsStream(folder);
+        Reader reader = new InputStreamReader(inputStream);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        Iterator<String> iterator = bufferedReader.lines().iterator();
+        StringBuilder arquivos = new StringBuilder();
+        arquivos.append("[");
+        while (true) {
+            arquivos.append(iterator.next());
+            if (iterator.hasNext()) {
+                arquivos.append(", ");
+            } else {
+                break;
+            }
+        }
+        arquivos.append("]");
+        return arquivos.toString();
+    }
+
     public final Message retrieveMessage() {
         try {
             byte[] buffer = new byte[1000];
             DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
             this.listenerDatagramSocket.receive(messageIn);
             String messageStr = new String(messageIn.getData());
-            return new Message(messageStr);
+            Message message = new Message(messageStr);
+            switch (message.getType()) {
+                case LISTFILES:
+                    String arquivos = ls("");
+                    sendMessage(new Message(MessageType.FILES, arquivos));
+                    break;
+            }
+            return message;
         } catch (IOException ex) {
             Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
         }

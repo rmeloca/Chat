@@ -21,10 +21,10 @@ public class GroupMessageCollector implements Runnable {
     public void run() {
         while (true) {
             Message retrieveMessage = group.retrieveMessage();
+            System.out.println(retrieveMessage.toString());
             if (retrieveMessage.getType().equals(MessageType.LEAVE) && retrieveMessage.getSender().equals(group.getSelf())) {
                 break;
             }
-            System.out.println(retrieveMessage.toString());
         }
     }
 
