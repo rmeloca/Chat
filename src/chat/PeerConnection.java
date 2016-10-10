@@ -103,11 +103,12 @@ public class PeerConnection {
                 case DOWNFILE:
                     String info = getFileInfo(message.getContent());
                     sendMessage(new Message(MessageType.DOWNINFO, info));
-                    Thread sendFileThread = new Thread();
+                    Thread sendFileThread = new Thread(new FileSender(this, message.getContent()));
                     sendFileThread.start();
                     break;
                 case DOWNINFO:
-                    Thread wgetThread = new Thread();
+                    String[] split = message.getContent().replace("[", "").replace("]", "").replace(" ", "").split(",");
+                    Thread wgetThread = new Thread(new FileDownloader(this, InetAddress.getByName(split[2]), Integer.valueOf(split[3]), split[0], Integer.valueOf(split[1])));
                     wgetThread.start();
                     break;
             }
@@ -139,14 +140,14 @@ public class PeerConnection {
 
     private String getFileInfo(String filename) {
         try {
-            InputStream inputStream = getClass().getResourceAsStream(filename);
+            InputStream inputStream = getClass().getResourceAsStream(filename.trim());
             StringBuilder arquivos = new StringBuilder();
             arquivos.append("[");
             arquivos.append(filename);
             arquivos.append(", ");
             arquivos.append(inputStream.available());
             arquivos.append(", ");
-            arquivos.append(this.self.getIp().getHostName());
+            arquivos.append(this.self.getIp().getHostAddress());
             arquivos.append(", ");
             arquivos.append(20000);
             arquivos.append("]");

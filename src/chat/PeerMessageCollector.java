@@ -19,7 +19,7 @@ public class PeerMessageCollector implements Runnable {
 
     @Override
     public void run() {
-        while (true) {            
+        while (true) {
             Message retrieveMessage = this.peerConnection.retrieveMessage();
             System.out.println(retrieveMessage.toString());
         }
