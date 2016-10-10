@@ -86,6 +86,10 @@ public class Message {
         return addressee;
     }
 
+    public String getContent() {
+        return content;
+    }
+
     @Override
     public String toString() {
         switch (type) {

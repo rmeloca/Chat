@@ -86,6 +86,10 @@ public class Client {
         this.ip = ip;
     }
 
+    public InetAddress getIp() {
+        return ip;
+    }
+
     public Group getGroup() {
         return group;
     }
@@ -133,7 +137,7 @@ public class Client {
     public void connectToPeer(InetAddress ip, int port) {
         int listenToPort = this.listenToPortQueue.poll();
         Client client = this.knownHosts.get(ip);
-        PeerConnection peerConnection = new PeerConnection(port, ip, port, client);
+        PeerConnection peerConnection = new PeerConnection(port, ip, port, client, this);
         this.connections.put(ip, peerConnection);
         Thread thread = new Thread(new PeerMessageCollector(peerConnection));
         thread.start();
@@ -150,9 +154,15 @@ public class Client {
         if (peerConnection == null) {
             connectToPeer(ip, 10000);
             peerConnection = this.connections.get(ip);
-            this.group.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), ""));
+            this.group.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getPeer(), ""));
         }
-        peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getClient(), text));
+        if (text.equals("ls")) {
+            peerConnection.sendMessage(new Message(MessageType.LISTFILES, this));
+        } else if (text.startsWith("wget")) {
+            peerConnection.sendMessage(new Message(MessageType.DOWNFILE, this, text.split(" ")[1]));
+        } else {
+            peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getPeer(), text));
+        }
     }
 
     @Override

@@ -5,9 +5,10 @@
  */
 package chat;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,11 +16,12 @@ import java.io.Reader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 /**
  *
@@ -32,9 +34,10 @@ public class PeerConnection {
     private final int talkToPort;
     private final DatagramSocket listenerDatagramSocket;
     private final DatagramSocket talkerDatagramSocket;
-    private final Client client;
+    private final Client peer;
+    private final Client self;
 
-    public PeerConnection(int listenToPort, InetAddress talkToHost, int talkToPort, Client client) {
+    public PeerConnection(int listenToPort, InetAddress talkToHost, int talkToPort, Client peer, Client self) {
         this.listenToPort = listenToPort;
         this.talkToHost = talkToHost;
         this.talkToPort = talkToPort;
@@ -51,7 +54,8 @@ public class PeerConnection {
 
         this.listenerDatagramSocket = listenerDatagramSocket;
         this.talkerDatagramSocket = talkerDatagramSocket;
-        this.client = client;
+        this.peer = peer;
+        this.self = self;
     }
 
     public int getListenToPort() {
@@ -62,8 +66,8 @@ public class PeerConnection {
         return talkToHost;
     }
 
-    public Client getClient() {
-        return client;
+    public Client getPeer() {
+        return peer;
     }
 
     public void disconnect() {
@@ -82,6 +86,36 @@ public class PeerConnection {
         } catch (IOException ex) {
             System.err.println("Erro ao enviar mensagem" + ex.getMessage());
         }
+    }
+
+    public final Message retrieveMessage() {
+        try {
+            byte[] buffer = new byte[1000];
+            DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
+            this.listenerDatagramSocket.receive(messageIn);
+            String messageStr = new String(messageIn.getData());
+            Message message = new Message(messageStr);
+            switch (message.getType()) {
+                case LISTFILES:
+                    String arquivos = ls("");
+                    sendMessage(new Message(MessageType.FILES, arquivos));
+                    break;
+                case DOWNFILE:
+                    String info = getFileInfo(message.getContent());
+                    sendMessage(new Message(MessageType.DOWNINFO, info));
+                    Thread sendFileThread = new Thread();
+                    sendFileThread.start();
+                    break;
+                case DOWNINFO:
+                    Thread wgetThread = new Thread();
+                    wgetThread.start();
+                    break;
+            }
+            return message;
+        } catch (IOException ex) {
+            Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
     private String ls(String folder) {
@@ -103,24 +137,111 @@ public class PeerConnection {
         return arquivos.toString();
     }
 
-    public final Message retrieveMessage() {
+    private String getFileInfo(String filename) {
         try {
-            byte[] buffer = new byte[1000];
-            DatagramPacket messageIn = new DatagramPacket(buffer, buffer.length);
-            this.listenerDatagramSocket.receive(messageIn);
-            String messageStr = new String(messageIn.getData());
-            Message message = new Message(messageStr);
-            switch (message.getType()) {
-                case LISTFILES:
-                    String arquivos = ls("");
-                    sendMessage(new Message(MessageType.FILES, arquivos));
-                    break;
-            }
-            return message;
+            InputStream inputStream = getClass().getResourceAsStream(filename);
+            StringBuilder arquivos = new StringBuilder();
+            arquivos.append("[");
+            arquivos.append(filename);
+            arquivos.append(", ");
+            arquivos.append(inputStream.available());
+            arquivos.append(", ");
+            arquivos.append(this.self.getIp().getHostName());
+            arquivos.append(", ");
+            arquivos.append(20000);
+            arquivos.append("]");
+            return arquivos.toString();
         } catch (IOException ex) {
-            Logger.getLogger(Group.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
         }
-        return null;
+    }
+
+    protected void sendFile(String filename) {
+        ServerSocket serverSocket = null;
+        Socket clientSocket = null;
+        InputStream inputStream = null;
+        try {
+            int serverPort = 20000;
+            serverSocket = new ServerSocket(serverPort);
+            clientSocket = serverSocket.accept();
+            inputStream = getClass().getResourceAsStream(filename);
+            while (true) {
+                int read = inputStream.read();
+                if (read == -1) {
+                    break;
+                }
+                clientSocket.getOutputStream().write(read);
+            }
+        } catch (IOException e) {
+            System.out.println("Socket Error: " + e.getMessage());
+        } finally {
+            if (serverSocket != null) {
+                try {
+                    serverSocket.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (clientSocket != null) {
+                try {
+                    clientSocket.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
+    protected void wget(InetAddress ip, int port, String filename, int size) {
+        Socket clientSocket = null;
+        FileOutputStream download = null;
+        InputStream inputStream = null;
+        try {
+            clientSocket = new Socket(ip, port);
+            inputStream = clientSocket.getInputStream();
+
+            download = new FileOutputStream(filename);
+            while (true) {
+                int read = inputStream.read();
+                if (read == -1) {
+                    break;
+                }
+                download.write(read);
+            }
+        } catch (IOException ex) {
+            Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            if (clientSocket != null) {
+                try {
+                    clientSocket.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (download != null) {
+                try {
+                    download.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+
     }
 
 }
