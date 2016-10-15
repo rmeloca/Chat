@@ -45,7 +45,7 @@ public class ClientTest {
             InetAddress romuloIp = InetAddress.getByName("192.168.25.4");
 
             romulo.addKnownHost(biancaIp, bianca);
-            romulo.connectToPeer(biancaIp, 10000);
+//            romulo.connectToPeer(biancaIp, 10000);
 
 //            romulo.sendMessageToPeer(biancaIp, "Ola");
 //            romulo.sendMessageToPeer(biancaIp, "Ola");

@@ -84,11 +84,6 @@ public class Group extends Observable {
                     this.self.addKnownHost(newClientAddress, newClient);
                     addOnline(newClient);
                     break;
-                case MSGIDV:
-                    if (message.getAddressee().equals(this.self)) {
-                        this.self.connectToPeer(messageIn.getAddress(), 10000);
-                    }
-                    break;
                 case LEAVE:
                     removeOnline(new Client(message.getSender().getNickname()));
                     break;

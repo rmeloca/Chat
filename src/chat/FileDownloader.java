@@ -13,13 +13,13 @@ import java.net.InetAddress;
  */
 public class FileDownloader implements Runnable {
 
-    private final PeerConnection peerConnection;
+    private final PeerController peerConnection;
     private final InetAddress ip;
     private final int port;
     private final String filename;
     private final int size;
 
-    public FileDownloader(PeerConnection peerConnection, InetAddress ip, int port, String filename, int size) {
+    public FileDownloader(PeerController peerConnection, InetAddress ip, int port, String filename, int size) {
         this.peerConnection = peerConnection;
         this.ip = ip;
         this.port = port;

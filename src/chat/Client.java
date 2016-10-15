@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,20 +49,15 @@ public class Client {
     private String nickname;
     private InetAddress ip;
     private Group group;
-    private final PriorityQueue<Integer> listenToPortQueue;
-    private final Map<InetAddress, PeerConnection> connections;
     private final Map<InetAddress, Client> knownHosts;
+    private PeerController peerController;
+    private Thread peerMessageCollectorThread;
+    private Thread groupMessageCollectorThread;
 
     public Client(String nickname) {
         this.nickname = nickname;
         this.group = null;
-        this.connections = new HashMap<>();
         this.knownHosts = new HashMap<>();
-
-        this.listenToPortQueue = new PriorityQueue<>();
-        for (int i = 30000; i < 30500; i++) {
-            this.listenToPortQueue.add(i);
-        }
 
         InetAddress ip = null;
         try {
@@ -120,48 +114,38 @@ public class Client {
     }
 
     public void leaveGroup() {
+        this.peerMessageCollectorThread.interrupt();
+        this.groupMessageCollectorThread.interrupt();
+
+        this.peerController.disconnect();
         this.group.leaveGroup();
+
+        this.peerController = null;
         this.group = null;
     }
 
     public void joinGroup(InetAddress ip, int port) {
         this.group = new Group(ip, port, this);
-        Thread thread = new Thread(new GroupMessageCollector(group));
-        thread.start();
+        this.groupMessageCollectorThread = new Thread(new GroupMessageCollector(this.group));
+        this.groupMessageCollectorThread.start();
+
+        this.peerController = new PeerController(this);
+        this.peerMessageCollectorThread = new Thread(new PeerMessageCollector(this.peerController));
+        this.peerMessageCollectorThread.start();
     }
 
     public void sendMessageToGroup(String text) {
         this.group.sendMessage(new Message(MessageType.MSG, this, text));
     }
 
-    public void connectToPeer(InetAddress ip, int port) {
-        int listenToPort = this.listenToPortQueue.poll();
-        Client client = this.knownHosts.get(ip);
-        PeerConnection peerConnection = new PeerConnection(port, ip, port, client, this);
-        this.connections.put(ip, peerConnection);
-        Thread thread = new Thread(new PeerMessageCollector(peerConnection));
-        thread.start();
-    }
-
-    public void disconnectFromPeer(InetAddress ip) {
-        PeerConnection disconnectedPeer = this.connections.remove(ip);
-        disconnectedPeer.disconnect();
-        this.listenToPortQueue.add(disconnectedPeer.getListenToPort());
-    }
-
     public void sendMessageToPeer(InetAddress ip, String text) {
-        PeerConnection peerConnection = this.connections.get(ip);
-        if (peerConnection == null) {
-            connectToPeer(ip, 10000);
-            peerConnection = this.connections.get(ip);
-            this.group.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getPeer(), ""));
-        }
+        Client addressee = this.knownHosts.get(ip);
         if (text.equals("ls")) {
-            peerConnection.sendMessage(new Message(MessageType.LISTFILES, this));
+            this.peerController.sendMessage(new Message(MessageType.LISTFILES, this, addressee));
         } else if (text.startsWith("wget")) {
-            peerConnection.sendMessage(new Message(MessageType.DOWNFILE, this, text.split(" ")[1]));
+            this.peerController.sendMessage(new Message(MessageType.DOWNFILE, this, addressee, text.split(" ")[1]));
         } else {
-            peerConnection.sendMessage(new Message(MessageType.MSGIDV, this, peerConnection.getPeer(), text));
+            this.peerController.sendMessage(new Message(MessageType.MSGIDV, this, addressee, text));
         }
     }
 
@@ -182,14 +166,10 @@ public class Client {
 
         Client cliente = new Client(apelido);
 
-//        System.out.println("IP");
         String ip;
-//        ip = scanner.next();
         ip = "225.1.2.3";
 
-//        System.out.println("Porta");
         int porta;
-//        porta = scanner.nextInt();
         porta = 6789;
 
         try {

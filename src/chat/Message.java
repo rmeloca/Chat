@@ -74,6 +74,13 @@ public class Message {
         this.content = conteudo;
     }
 
+    Message(MessageType messageType, Client sender, Client addressee) {
+        this.content = "";
+        this.type = messageType;
+        this.sender = sender;
+        this.addressee = addressee;
+    }
+
     public MessageType getType() {
         return type;
     }

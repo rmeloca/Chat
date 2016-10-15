@@ -11,10 +11,10 @@ package chat;
  */
 public class FileSender implements Runnable {
 
-    private final PeerConnection peerConnection;
+    private final PeerController peerConnection;
     private final String filename;
 
-    public FileSender(PeerConnection peerConnection, String filename) {
+    public FileSender(PeerController peerConnection, String filename) {
         this.peerConnection = peerConnection;
         this.filename = filename;
     }

@@ -11,9 +11,9 @@ package chat;
  */
 public class PeerMessageCollector implements Runnable {
 
-    private final PeerConnection peerConnection;
+    private final PeerController peerConnection;
 
-    public PeerMessageCollector(PeerConnection peerConnection) {
+    public PeerMessageCollector(PeerController peerConnection) {
         this.peerConnection = peerConnection;
     }
 

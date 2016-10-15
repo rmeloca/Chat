@@ -6,8 +6,6 @@
 package chat;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,47 +25,25 @@ import java.util.logging.Logger;
  *
  * @author romulo
  */
-public class PeerConnection {
+public class PeerController {
 
-    private final int listenToPort;
-    private final InetAddress talkToHost;
-    private final int talkToPort;
     private final DatagramSocket listenerDatagramSocket;
     private final DatagramSocket talkerDatagramSocket;
-    private final Client peer;
     private final Client self;
 
-    public PeerConnection(int listenToPort, InetAddress talkToHost, int talkToPort, Client peer, Client self) {
-        this.listenToPort = listenToPort;
-        this.talkToHost = talkToHost;
-        this.talkToPort = talkToPort;
-
+    public PeerController(Client self) {
         DatagramSocket listenerDatagramSocket = null;
         DatagramSocket talkerDatagramSocket = null;
         try {
-            listenerDatagramSocket = new DatagramSocket(this.listenToPort);
+            listenerDatagramSocket = new DatagramSocket(30000);
             talkerDatagramSocket = new DatagramSocket();
-            talkerDatagramSocket.connect(talkToHost, talkToPort);
         } catch (SocketException ex) {
-            Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         this.listenerDatagramSocket = listenerDatagramSocket;
         this.talkerDatagramSocket = talkerDatagramSocket;
-        this.peer = peer;
         this.self = self;
-    }
-
-    public int getListenToPort() {
-        return listenToPort;
-    }
-
-    public InetAddress getHostAddress() {
-        return talkToHost;
-    }
-
-    public Client getPeer() {
-        return peer;
     }
 
     public void disconnect() {
@@ -76,10 +52,11 @@ public class PeerConnection {
     }
 
     public final void sendMessage(Message message) {
+        talkerDatagramSocket.connect(message.getAddressee().getIp(), 6799);
         byte[] bytesMessage = message.toString().getBytes();
         DatagramPacket messageOut;
         try {
-            messageOut = new DatagramPacket(bytesMessage, bytesMessage.length, this.talkToHost, this.talkToPort);
+            messageOut = new DatagramPacket(bytesMessage, bytesMessage.length, message.getAddressee().getIp(), 31000);
             this.talkerDatagramSocket.send(messageOut);
         } catch (SocketException ex) {
             System.err.println("Erro na comunicacao");
@@ -153,7 +130,7 @@ public class PeerConnection {
             arquivos.append("]");
             return arquivos.toString();
         } catch (IOException ex) {
-            Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
     }
@@ -181,21 +158,21 @@ public class PeerConnection {
                 try {
                     serverSocket.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             if (clientSocket != null) {
                 try {
                     clientSocket.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
@@ -218,27 +195,27 @@ public class PeerConnection {
                 download.write(read);
             }
         } catch (IOException ex) {
-            Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             if (clientSocket != null) {
                 try {
                     clientSocket.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             if (download != null) {
                 try {
                     download.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
             if (inputStream != null) {
                 try {
                     inputStream.close();
                 } catch (IOException ex) {
-                    Logger.getLogger(PeerConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(PeerController.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         }
